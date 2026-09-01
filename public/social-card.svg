@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f7f3eb"/><stop offset="1" stop-color="#e8e2d7"/></linearGradient>
+    <filter id="shadow"><feDropShadow dx="0" dy="18" stdDeviation="24" flood-opacity=".13"/></filter>
+  </defs>
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <circle cx="1080" cy="100" r="170" fill="#ff705f" opacity=".12"/>
+  <circle cx="90" cy="600" r="230" fill="#b6e274" opacity=".19"/>
+  <g filter="url(#shadow)">
+    <rect x="78" y="66" width="1044" height="498" rx="34" fill="#11110f"/>
+    <path d="M680 395C758 395 732 206 847 206c91 0 58 184 174 184" fill="none" stroke="#393933" stroke-width="10" stroke-linecap="round"/>
+    <circle cx="680" cy="395" r="15" fill="#ff705f"/>
+    <circle cx="1021" cy="390" r="15" fill="#b6e274"/>
+    <text x="142" y="215" fill="#f7f3eb" font-family="Arial, Helvetica, sans-serif" font-size="74" font-weight="700">pave.to(done)</text>
+    <text x="145" y="290" fill="#b9b6ae" font-family="Arial, Helvetica, sans-serif" font-size="28">Teach once. Assist at any level.</text>
+    <text x="145" y="333" fill="#b9b6ae" font-family="Arial, Helvetica, sans-serif" font-size="28">Stay correct as software changes.</text>
+    <rect x="145" y="406" width="342" height="68" rx="34" fill="#f7f3eb"/>
+    <text x="183" y="450" fill="#11110f" font-family="Arial, Helvetica, sans-serif" font-size="23" font-weight="700">SHOW · SHARE · DELEGATE</text>
+  </g>
+</svg>

@@ -1,0 +1,17 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "pave-to-done",
+  "main": "src/server/worker.ts",
+  "compatibility_date": "2026-09-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": true,
+  },
+  "durable_objects": {
+    "bindings": [{ "name": "JOURNEYS", "class_name": "JourneyCoordinator" }],
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["JourneyCoordinator"] }],
+  "observability": { "enabled": true },
+}
