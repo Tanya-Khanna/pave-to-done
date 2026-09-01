@@ -12,6 +12,12 @@
 - Leave a combined item unchecked if any part remains incomplete or unverified.
 - Do not mark browser, device, usability, video, or public-link checks complete from source inspection alone.
 
+## Current progress
+
+**Active step:** Step 1 — Architecture and platform gaps  
+**Completed in Step 1:** 6 of 9 items  
+**External verification still required:** authorize Wrangler for the claimed Cloudflare account, deploy this commit, and connect the Chrome browser extension so the Chrome 149+ WebMCP check can run. The currently deployed build was verified as top-level with working WebMCP, but it predates the new `Origin-Agent-Cluster` header and reports `window.originAgentCluster === false`.
+
 ## 1. Architecture and platform gaps
 
 - [x] Decide whether to add React Router as specified or update the normative plans to document the current custom navigation. — Evidence: `IMPLEMENTATION_PLAN.md` now records the intentional two-route History API decision; `src/test/App.test.tsx` verifies direct routes and history navigation.
