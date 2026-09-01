@@ -6,6 +6,20 @@
 
 Use this as a literal release checklist. Do not mark an item complete because it is planned.
 
+## Verified release evidence — September 1
+
+| Evidence                  | Result                                                                                                                                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Permanent live demo       | `https://pave-to-done.north-raincoat.workers.dev/demo` claimed into the entrant's Cloudflare account                                                                 |
+| Cloudflare version        | `36165c51-5d41-4974-af94-d9cab57fed09`                                                                                                                               |
+| Live operational verifier | Passed health, security headers, Durable Object persistence, exactly-once retry, and stale-revision rejection                                                        |
+| Live browser suite        | 8/8 Playwright journeys passed against the permanent deployment                                                                                                      |
+| Live WebMCP proof         | ChatGPT in-app browser displayed `WebMCP ready` and discovered the six valid idle-state tools with strict schemas and annotations                                    |
+| Repository release gate   | GitHub Actions passed formatting, ESLint, TypeScript, 10 deterministic tests, and the production Worker build                                                        |
+| Public artifacts          | MIT license, source, deployed-product GIF, screenshots, architecture walkthrough, PRD, engineering spec, resource audit, and ready-to-paste Devpost copy are present |
+
+Human-owned tasks still required before freeze: confirm eligibility and Devpost registration, record and upload the narrated public YouTube demo, insert its URL into the README and submission copy, complete uncoached/second-machine checks, submit the Devpost form, and preserve the submitted repository/site unchanged after the deadline.
+
 ## A. Stage One eligibility gate
 
 - [ ] Entrant has joined the hackathon and satisfies the official eligibility/location rules.

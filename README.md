@@ -8,7 +8,7 @@
 
 An adaptive journey layer for web apps where a person can **learn the task**, **share control with an agent**, or **delegate it safely**—without losing the visible interface or the final say.
 
-[Live demo](https://pave-to-done.snapdragon-ancient.workers.dev/demo) · [Source](https://github.com/Tanya-Khanna/pave-to-done) · [Why WebMCP](#why-webmcp-is-the-product) · [Three modes](#one-task-three-levels-of-agency) · [Self-healing](#when-the-website-changes) · [Architecture](#architecture) · [Judge it](#judge-it-in-under-three-minutes)
+[Live demo](https://pave-to-done.north-raincoat.workers.dev/demo) · [Source](https://github.com/Tanya-Khanna/pave-to-done) · [Why WebMCP](#why-webmcp-is-the-product) · [Three modes](#one-task-three-levels-of-agency) · [Self-healing](#when-the-website-changes) · [Architecture](#architecture) · [Judge it](#judge-it-in-under-three-minutes)
 
 </div>
 

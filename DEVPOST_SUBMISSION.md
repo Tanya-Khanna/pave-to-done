@@ -6,7 +6,7 @@ A WebMCP-native journey layer that lets people learn a web task, share it with a
 
 ## Links
 
-- **Live app:** https://pave-to-done.snapdragon-ancient.workers.dev/demo
+- **Live app:** https://pave-to-done.north-raincoat.workers.dev/demo
 - **Source:** https://github.com/Tanya-Khanna/pave-to-done
 - **Demo video:** add the public YouTube URL before submission
 

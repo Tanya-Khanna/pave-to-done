@@ -1,5 +1,5 @@
 const baseURL = (
-  process.env.VERIFY_BASE_URL ?? "https://pave-to-done.snapdragon-ancient.workers.dev"
+  process.env.VERIFY_BASE_URL ?? "https://pave-to-done.north-raincoat.workers.dev"
 ).replace(/\/$/, "");
 
 function invariant(value, message) {
