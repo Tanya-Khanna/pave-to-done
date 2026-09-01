@@ -14,6 +14,7 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "capture:demo": "node scripts/capture-demo.mjs",
+    "verify:live": "node scripts/verify-live.mjs",
     "lint": "eslint .",
     "format:check": "prettier --check ."
   },

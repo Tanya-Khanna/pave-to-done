@@ -6,7 +6,7 @@
 
 An adaptive journey layer for web apps where a person can **learn the task**, **share control with an agent**, or **delegate it safely**—without losing the visible interface or the final say.
 
-[Live demo](https://pave-to-done.snapdragon-ancient.workers.dev/demo) · [Why WebMCP](#why-webmcp-is-the-product) · [Three modes](#one-task-three-levels-of-agency) · [Self-healing](#when-the-website-changes) · [Architecture](#architecture) · [Judge it](#judge-it-in-under-three-minutes)
+[Live demo](https://pave-to-done.snapdragon-ancient.workers.dev/demo) · [Source](https://github.com/Tanya-Khanna/pave-to-done) · [Why WebMCP](#why-webmcp-is-the-product) · [Three modes](#one-task-three-levels-of-agency) · [Self-healing](#when-the-website-changes) · [Architecture](#architecture) · [Judge it](#judge-it-in-under-three-minutes)
 
 </div>
 
@@ -142,15 +142,18 @@ npm run typecheck
 npm test
 npm run test:e2e
 npm run build
+npm run verify:live
 ```
 
 Open `http://localhost:5173/demo`. The manual portal works in any modern browser. To exercise the real tool surface, use ChatGPT's in-app browser or Chrome 149+ with WebMCP enabled. No API key, database setup, or seeded account is required.
 
 WebMCP testing targets ChatGPT's in-app browser and Chrome 149+ with WebMCP enabled. The manual portal remains usable when WebMCP is unavailable.
 
+`verify:live` checks the deployed health route, security headers, Durable Object session creation, exactly-once command retry, stale-revision rejection, and persisted hash-chained events. Override its target with `VERIFY_BASE_URL=https://your-host.example`.
+
 ## Quality gates
 
-The current release gate passes ESLint, TypeScript, 10 deterministic/domain/property/prompt-eval checks, 5 Playwright journeys, and a production Worker build. The final release still blocks on:
+The current release gate passes ESLint, TypeScript, 10 deterministic/domain/property/prompt-eval checks, 8 Playwright journeys, a production Worker build, and a live operational verification. The final release still blocks on:
 
 - a deployed real-agent WebMCP loop;
 - no duplicate effect under retries or concurrent commands;
@@ -170,6 +173,12 @@ The current release gate passes ESLint, TypeScript, 10 deterministic/domain/prop
 | [`SUBMISSION_CHECKLIST.md`](./SUBMISSION_CHECKLIST.md) | Stage One gate, artifacts, video script, rubric proof, and freeze policy            |
 | [`architecture.html`](./architecture.html)             | Interactive architecture walkthrough                                                |
 | [`architecture.md`](./architecture.md)                 | Accessible architecture companion                                                   |
+
+## Built with and inspiration
+
+The shipped build uses the WebMCP imperative API, React, TypeScript, Vite, Cloudflare Workers and Durable Objects, Zod, Vitest, fast-check, and Playwright. Lucide supplies the interface icons under its ISC license.
+
+The teach-once interaction is informed by ShowMeHow; the in-page assistance spectrum is informed by Unstuck and Waylo. `pave.to(done)` combines those useful directions with a different core object: a revisioned semantic journey jointly operated by the visible UI and WebMCP tools. The mode can change without restarting, and a website change can repair the route without erasing progress or lowering human approval boundaries.
 
 ## Deliberate submission limits
 
