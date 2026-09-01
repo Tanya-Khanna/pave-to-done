@@ -4,6 +4,8 @@
 
 ### Teach once. Assist at any level. Stay correct as software changes.
 
+[![Release gate](https://github.com/Tanya-Khanna/pave-to-done/actions/workflows/ci.yml/badge.svg)](https://github.com/Tanya-Khanna/pave-to-done/actions/workflows/ci.yml)
+
 An adaptive journey layer for web apps where a person can **learn the task**, **share control with an agent**, or **delegate it safely**—without losing the visible interface or the final say.
 
 [Live demo](https://pave-to-done.snapdragon-ancient.workers.dev/demo) · [Source](https://github.com/Tanya-Khanna/pave-to-done) · [Why WebMCP](#why-webmcp-is-the-product) · [Three modes](#one-task-three-levels-of-agency) · [Self-healing](#when-the-website-changes) · [Architecture](#architecture) · [Judge it](#judge-it-in-under-three-minutes)
@@ -155,14 +157,9 @@ WebMCP testing targets ChatGPT's in-app browser and Chrome 149+ with WebMCP enab
 
 ## Quality gates
 
-The current release gate passes ESLint, TypeScript, 10 deterministic/domain/property/prompt-eval checks, 8 Playwright journeys, a production Worker build, and a live operational verification. The final release still blocks on:
+The automatic GitHub release gate runs formatting, ESLint, TypeScript, 10 deterministic domain/property/prompt-eval checks, and a production Worker build. The checked-in Playwright suite separately covers eight browser journeys against the built Worker or a supplied live URL. `verify:live` checks the deployed health route, security headers, Durable Object state, exactly-once retry behavior, stale-revision rejection, and the persisted event chain.
 
-- a deployed real-agent WebMCP loop;
-- no duplicate effect under retries or concurrent commands;
-- no sensitive action reachable through the tool surface;
-- repair preserving progress without downgrading risk;
-- keyboard, reduced-motion, contrast, and responsive checks;
-- a clean guest reset and an honest public demo.
+The current submission build has passed all three layers. It also has direct in-app-browser evidence of live WebMCP discovery, no sensitive finalization tool, progress-preserving repair, keyboard and reduced-motion behavior, responsive layouts, and clean guest reset. The remaining submission operation is recording and publishing the narrated YouTube demo from the frozen build.
 
 ## Project documents
 
