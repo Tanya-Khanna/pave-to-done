@@ -6,6 +6,8 @@
 **Target submission:** Thursday, September 3 at 2:00 p.m. EDT  
 **Builder assumption:** one primary builder and one helper for usability/video checks
 
+> **Implementation audit — September 1, 2026:** ~~Struck-through items~~ ✅ are complete and supported by source, automated checks, or the permanent deployment. Unstruck work is partial, unverified, or human-owned. Combined items remain unstruck when any part is still open.
+
 ## 1. Delivery rule
 
 The project wins or loses on one reliable, judge-visible loop:
@@ -150,13 +152,13 @@ Keep domain decisions pure and separate from Durable Object persistence, the Web
 
 **Outcome:** a public, deployable, licensed page exists before feature work expands.
 
-1. Scaffold Vite React TypeScript.
-2. Add formatting, lint, test, and build scripts.
-3. Add MIT `LICENSE` immediately so it cannot be missed.
-4. Add routes and plain placeholder pages.
-5. Add Cloudflare Worker/Vite configuration, Durable Object binding and migration, secure headers, and first production deployment.
+1. ~~Scaffold Vite React TypeScript.~~ ✅
+2. ~~Add formatting, lint, test, and build scripts.~~ ✅
+3. ~~Add MIT `LICENSE` immediately so it cannot be missed.~~ ✅
+4. ~~Add routes and plain placeholder pages.~~ ✅
+5. ~~Add Cloudflare Worker/Vite configuration, Durable Object binding and migration, secure headers, and first production deployment.~~ ✅
 6. Create the public repository and connect continuous deployment.
-7. Put live URL and one-command local setup into the README.
+7. ~~Put live URL and one-command local setup into the README.~~ ✅
 
 **Gate 0:** a fresh clone can install, run, test, build, and deploy; `/api/health` and live `/demo` work without authentication; the Worker reports an origin-keyed top-level page.
 
@@ -165,14 +167,14 @@ Keep domain decisions pure and separate from Durable Object persistence, the Web
 **Outcome:** the application can complete the entire expense workflow without an agent.
 
 1. Define `JourneySnapshot`, `JourneyStep`, `Guide`, `RecordingTrace`, `Repair`, `AgencyPolicy`, versioned capability manifests, command envelopes, and domain events.
-2. Build pure `decide` and `evolve` functions; commands express intent and accepted events express facts.
+2. ~~Build pure `decide` and `evolve` functions; commands express intent and accepted events express facts.~~ ✅
 3. Seed receipt, project, category, expense policy, and recorded guide data.
-4. Implement `JourneyCoordinator` with transactional snapshot/event persistence, expected revisions, idempotent results, and deterministic replay.
-5. Implement portal v1: receipt inbox, draft form, review, one-time confirmation challenge, completion, and deterministic reset.
-6. Render the action trail from accepted server events.
+4. ~~Implement `JourneyCoordinator` with transactional snapshot/event persistence, expected revisions, idempotent results, and deterministic replay.~~ ✅
+5. ~~Implement portal v1: receipt inbox, draft form, review, one-time confirmation challenge, completion, and deterministic reset.~~ ✅
+6. ~~Render the action trail from accepted server events.~~ ✅
 7. Add structured, redacted request/operation/revision logs.
 
-**Gate 1:** the main $86 Project Atlas task completes manually after reset and refresh, a repeated operation commits once, two stale concurrent commands cannot both mutate state, replay matches the snapshot, and final confirmation requires human UI activation.
+**~~Gate 1: the main $86 Project Atlas task completes manually after reset and refresh, a repeated operation commits once, two stale concurrent commands cannot both mutate state, replay matches the snapshot, and final confirmation requires human UI activation.~~ ✅**
 
 ### Phase 2 — WebMCP vertical slice
 
@@ -180,13 +182,13 @@ Keep domain decisions pure and separate from Durable Object persistence, the Web
 
 Implement in this order:
 
-1. WebMCP feature detection and connection status.
-2. `get_app_context` and `list_capabilities`.
-3. `get_journey` and `list_guides`.
-4. `create_expense_draft` and `update_expense_draft`.
-5. `prepare_expense_submission`, which opens but cannot accept confirmation.
-6. Route-level and state-level `AbortController` lifecycles with dynamic mutation-tool exposure.
-7. Pass the tool callback's cancellation signal into the command request and persist pending operation IDs for reconciliation.
+1. ~~WebMCP feature detection and connection status.~~ ✅
+2. ~~`get_app_context` and `list_capabilities`.~~ ✅
+3. ~~`get_journey` and `list_guides`.~~ ✅
+4. ~~`create_expense_draft` and `update_expense_draft`.~~ ✅
+5. ~~`prepare_expense_submission`, which opens but cannot accept confirmation.~~ ✅
+6. ~~Route-level and state-level `AbortController` lifecycles with dynamic mutation-tool exposure.~~ ✅
+7. ~~Pass the tool callback's cancellation signal into the command request and persist pending operation IDs for reconciliation.~~ ✅
 8. Generated JSON Schemas, independent server validation, annotations, redaction, and bounded result formatting.
 
 Start testing with this prompt:
@@ -199,7 +201,7 @@ Start testing with this prompt:
 
 **Outcome:** the same journey produces three visibly and behaviorally different collaborations.
 
-1. Implement policy matrix:
+1. ~~Implement policy matrix:~~ ✅
 
 | Risk/action                | SHOW ME           | DO IT WITH ME                         | DO IT FOR ME             |
 | -------------------------- | ----------------- | ------------------------------------- | ------------------------ |
@@ -209,12 +211,12 @@ Start testing with this prompt:
 | Sensitive consequence      | Human only        | Human only                            | Human only               |
 | Repair approval            | Human only        | Human only                            | Human only               |
 
-2. Add `set_agency_mode`, `create_journey`, and `show_guidance`.
-3. Enforce the policy table in the server transition engine and expose only relevant state-scoped mutation tools in the browser.
-4. Implement precondition/postcondition verification and step advancement.
-5. Preserve progress on every pairwise mode change.
+2. ~~Add `set_agency_mode`, `create_journey`, and `show_guidance`.~~ ✅
+3. ~~Enforce the policy table in the server transition engine and expose only relevant state-scoped mutation tools in the browser.~~ ✅
+4. ~~Implement precondition/postcondition verification and step advancement.~~ ✅
+5. ~~Preserve progress on every pairwise mode change.~~ ✅
 6. Build guide dock, mode selector, progress rail, server-event action trail, and pause/take-over controls.
-7. Add the control baton and actor labels.
+7. ~~Add the control baton and actor labels.~~ ✅
 
 **Gate 3:** the seeded journey passes all three modes from reset, and forbidden agent mutations fail with a useful, state-grounded result.
 
@@ -222,12 +224,12 @@ Start testing with this prompt:
 
 **Outcome:** SHOW ME is excellent enough to be a product rather than a tooltip demo.
 
-1. Create an `AnchorRegistry` keyed by capability ID.
-2. Measure target bounds on layout, resize, scroll, and portal version change.
-3. Render spotlight with a non-blocking cutout.
+1. ~~Create an `AnchorRegistry` keyed by capability ID.~~ ✅
+2. ~~Measure target bounds on layout, resize, scroll, and portal version change.~~ ✅
+3. ~~Render spotlight with a non-blocking cutout.~~ ✅
 4. Render semantic target outline, attention waypoint, anchored coach card, and optional ghost gesture.
-5. Keep instructed control clickable and focusable.
-6. Add keyboard focus, screen-reader status, and reduced-motion behavior.
+5. ~~Keep instructed control clickable and focusable.~~ ✅
+6. ~~Add keyboard focus, screen-reader status, and reduced-motion behavior.~~ ✅
 
 **Gate 4:** guidance stays attached after scroll/resize, does not block clicks, and communicates current action without color alone.
 
@@ -235,16 +237,16 @@ Start testing with this prompt:
 
 **Outcome:** the demo shows both safe remapping and human-reviewed repair.
 
-1. Implement portal v2 with a real layout/component change and renamed expense action.
-2. Keep unchanged meaning under the same capability ID; map it to the new visual anchor.
-3. Add a new required `businessPurpose` capability and validation rule.
+1. ~~Implement portal v2 with a real layout/component change and renamed expense action.~~ ✅
+2. ~~Keep unchanged meaning under the same capability ID; map it to the new visual anchor.~~ ✅
+3. ~~Add a new required `businessPurpose` capability and validation rule.~~ ✅
 4. Implement the pure journey compiler against versioned source/current manifests.
 5. Detect version change before every step transition.
-6. Mark satisfied postconditions complete rather than replaying them.
+6. ~~Mark satisfied postconditions complete rather than replaying them.~~ ✅
 7. Classify compatible, remapped, repair-required, and blocked outcomes; any risk increase blocks automatic continuation.
-8. Add `propose_journey_repair` and an in-page repair diff.
+8. ~~Add `propose_journey_repair` and an in-page repair diff.~~ ✅
 9. Server-reject repairs that lower risk, expand agent actors, remove required outcomes, or modify completed events.
-10. Keep repair approval human-only and block later mutations while pending.
+10. ~~Keep repair approval human-only and block later mutations while pending.~~ ✅
 11. Verify the same engine from SHOW ME, DO IT WITH ME, and DO IT FOR ME.
 
 **Gate 5:** switching portal version mid-journey preserves prior work, moves guidance to the new semantic anchor, pauses on the new material requirement, and cannot resume autonomous work without approval.
@@ -253,11 +255,11 @@ Start testing with this prompt:
 
 **Outcome:** “teach once” and “no recording required” are both real.
 
-1. Start/stop recording only through deliberate UI controls.
+1. ~~Start/stop recording only through deliberate UI controls.~~ ✅
 2. Capture safe semantic command events, target capabilities, before/after state, and narration.
-3. Redact receipt notes and field values not needed to define the journey.
-4. Implement `get_recording_trace` with `untrustedContentHint`.
-5. Implement `save_guide_draft`; keep publication human-only.
+3. ~~Redact receipt notes and field values not needed to define the journey.~~ ✅
+4. ~~Implement `get_recording_trace` with `untrustedContentHint`.~~ ✅
+5. ~~Implement `save_guide_draft`; keep publication human-only.~~ ✅
 6. Implement a deterministic ordered-event draft when an agent is unavailable; the trace and draft remain server-backed.
 7. Validate `create_journey` against live capability IDs for an on-demand mileage task.
 8. Label recorded, draft, and session-only sources precisely.
@@ -269,11 +271,11 @@ Start testing with this prompt:
 **Outcome:** a cohesive, memorable product experience wraps the working core.
 
 1. Implement speech output for current instruction, warning, and approval summary.
-2. Add microphone input only after capability detection; always show transcript and text field.
-3. Implement design tokens, typography, spacing, responsive shell, and states.
+2. ~~Add microphone input only after capability detection; always show transcript and text field.~~ ✅
+3. ~~Implement design tokens, typography, spacing, responsive shell, and states.~~ ✅
 4. Build landing hero, live mode preview, teach/on-demand convergence, healing morph, WebMCP proof, and CTA.
 5. Add the three signature animations: route drawing, control baton handoff, and semantic-anchor movement.
-6. Generate social card and capture consistent screenshots from the real app.
+6. ~~Generate social card and capture consistent screenshots from the real app.~~ ✅
 
 **Gate 7:** landing message is understood in five seconds, demo CTA is above the fold, animations remain smooth and optional, and no visual effect hides a broken or ambiguous state.
 
@@ -284,7 +286,7 @@ Start testing with this prompt:
 1. Complete automated tests and manual matrix.
 2. Run two uncoached usability attempts and fix blockers.
 3. Test production in ChatGPT, Chrome 149+, incognito, and a second machine/network.
-4. Finalize README, screenshots, the interactive architecture diagram and companion, tool table, security notes, limitations, and testing prompt.
+4. ~~Finalize README, screenshots, the interactive architecture diagram and companion, tool table, security notes, limitations, and testing prompt.~~ ✅
 5. Replace the clearly labeled storyboard GIF with an optimized capture of the deployed product performing real WebMCP calls; verify playback and alt text on GitHub.
 6. Record one clear demo under three minutes with audible narration and real tool calls.
 7. Upload video publicly to YouTube and verify playback while logged out.
@@ -549,16 +551,16 @@ Cut from the bottom upward. Never cut the live WebMCP loop, three agency policie
 
 The submission is done only when:
 
-- the live guest URL completes the main journey after a reset;
+- ~~the live guest URL completes the main journey after a reset;~~ ✅
 - ChatGPT visibly invokes the registered tools on the top-level page;
-- human and agent commands flow through one authoritative Durable Object with expected revisions and idempotency;
-- refresh and duplicate/concurrent/canceled operations recover without duplicate effects;
-- the accepted event log replays to the stored snapshot and the diagnostic panel exposes revision/lifecycle evidence;
-- SHOW ME, DO IT WITH ME, and DO IT FOR ME enforce distinct authority;
-- a recording can create a reviewable guide draft and a new task can start without one;
-- the portal update triggers both semantic remapping and material repair review;
-- no agent tool can finalize the expense, publish a guide, or approve a repair;
-- voice has visible fallback and the guidance system is accessible;
+- ~~human and agent commands flow through one authoritative Durable Object with expected revisions and idempotency;~~ ✅
+- ~~refresh and duplicate/concurrent/canceled operations recover without duplicate effects;~~ ✅
+- ~~the accepted event log replays to the stored snapshot and the diagnostic panel exposes revision/lifecycle evidence;~~ ✅
+- ~~SHOW ME, DO IT WITH ME, and DO IT FOR ME enforce distinct authority;~~ ✅
+- ~~a recording can create a reviewable guide draft and a new task can start without one;~~ ✅
+- ~~the portal update triggers both semantic remapping and material repair review;~~ ✅
+- ~~no agent tool can finalize the expense, publish a guide, or approve a repair;~~ ✅
+- ~~voice has visible fallback and the guidance system is accessible;~~ ✅
 - the landing page is polished, fast, and sends judges directly to the demo;
 - the repository is public, licensed, reproducible, documented, and matches the deployed tag;
 - the public YouTube video is under three minutes, audible, and shows real WebMCP use;

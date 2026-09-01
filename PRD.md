@@ -6,6 +6,8 @@
 **External deadline:** September 3, 2026 at 1:00 p.m. PDT / 4:00 p.m. EDT  
 **Product line:** Teach once. Assist at any level. Stay correct as software changes.
 
+> **Implementation audit — September 1, 2026:** ~~Struck-through items~~ ✅ are verified by the shipped source, automated tests, or the permanent live deployment. Unstruck items are incomplete, only partially implemented, or still require human/browser verification. A combined line remains unstruck if any part of it is unproven.
+
 ## 1. Executive decision
 
 `pave.to(done)` is an adaptive, in-product guide and execution layer for web software. A person describes a task in natural language and chooses how much help they want:
@@ -63,12 +65,12 @@ The employee can use any of the three modes. A pre-approved expense guide is ava
 
 ### Submission goals
 
-1. Demonstrate a non-trivial WebMCP implementation in which agent tool calls and direct human actions modify the same visible application state.
-2. Make all three agency modes materially different and allow switching modes without restarting.
-3. Support both expert-recorded and on-demand journeys.
+1. ~~Demonstrate a non-trivial WebMCP implementation in which agent tool calls and direct human actions modify the same visible application state.~~ ✅
+2. ~~Make all three agency modes materially different and allow switching modes without restarting.~~ ✅
+3. ~~Support both expert-recorded and on-demand journeys.~~ ✅
 4. Demonstrate self-healing for one cosmetic change and one material workflow change in every agency mode.
-5. Enforce a clear authority boundary: reversible actions may be delegated; sensitive actions require a person.
-6. Deliver a polished, coherent live product with voice, accessible visual guidance, graceful fallbacks, and a resettable guest demo.
+5. ~~Enforce a clear authority boundary: reversible actions may be delegated; sensitive actions require a person.~~ ✅
+6. ~~Deliver a polished, coherent live product with voice, accessible visual guidance, graceful fallbacks, and a resettable guest demo.~~ ✅
 7. Make the WebMCP implementation easy for judges to discover, test, and verify from the live URL, video, README, and source.
 
 ### Explicit non-goals for the hackathon build
@@ -115,10 +117,10 @@ The interface shows what the agent is doing, why, what changed, and who has cont
 
 The demo opens in a resettable guest session. The person sees the expense portal as the main work surface and a compact `pave.to(done)` dock. They may:
 
-- type or speak a task;
-- choose a mode before starting;
-- select a recorded guide; or
-- choose **Plan from this live app** when no guide applies.
+- ~~type or speak a task;~~ ✅
+- ~~choose a mode before starting;~~ ✅
+- ~~select a recorded guide; or~~ ✅
+- ~~choose **Plan from this live app** when no guide applies.~~ ✅
 
 The dock explains whether the journey is recorded or on demand. It never claims an on-demand plan has been expert-approved.
 
@@ -127,12 +129,12 @@ The dock explains whether the journey is recorded or on demand. It never claims 
 The agent reads application state and displays one current step. The guidance system combines:
 
 - a spotlight that lowers irrelevant visual noise;
-- a semantic outline around the actual target;
-- a small pulsing attention marker;
+- ~~a semantic outline around the actual target;~~ ✅
+- ~~a small pulsing attention marker;~~ ✅
 - an optional ghost-cursor gesture that demonstrates direction without clicking;
 - an anchored coach card with action, reason, and expected result;
-- a progress rail; and
-- a control baton labeled **Your turn**.
+- ~~a progress rail; and~~ ✅
+- ~~a control baton labeled **Your turn**.~~ ✅
 
 The person performs the action. The domain action updates state, the step's postcondition is verified, and the guide advances. The WebMCP agent cannot use domain mutation tools while SHOW ME is active.
 
@@ -140,9 +142,9 @@ The person performs the action. The domain action updates state, the step's post
 
 The journey assigns each step according to policy:
 
-- the agent may read state and complete explicitly reversible steps;
-- the person supplies judgment, missing information, and sensitive decisions;
-- the control baton moves between **Your turn** and **Agent's turn**;
+- ~~the agent may read state and complete explicitly reversible steps;~~ ✅
+- ~~the person supplies judgment, missing information, and sensitive decisions;~~ ✅
+- ~~the control baton moves between **Your turn** and **Agent's turn**;~~ ✅
 - either participant can pause or ask why;
 - the person can take over an agent-assigned reversible step.
 
@@ -248,7 +250,7 @@ The fictional Acme Expense Portal contains:
 
 It is implemented inside the same top-level React page as the guide. It is not an iframe, because ChatGPT site tools are top-level and iframe-registered tools are not currently supported.
 
-### Story A — recorded guide in SHOW ME
+### ~~Story A — recorded guide in SHOW ME~~ ✅
 
 Given the approved “Client meal reimbursement” guide and portal v1, when the person starts in SHOW ME, the interface highlights the correct live control one step at a time and advances only after the expected state change. No agent mutation succeeds.
 
@@ -256,7 +258,7 @@ Given the approved “Client meal reimbursement” guide and portal v1, when the
 
 The agent creates and populates a reversible draft, the person supplies the business justification, and the agent prepares review. The control baton, progress, and action trail match the actual actor.
 
-### Story C — recorded guide in DO IT FOR ME
+### ~~Story C — recorded guide in DO IT FOR ME~~ ✅
 
 The agent completes every permitted reversible step and stops at final submission. The person sees a complete approval summary and must explicitly confirm.
 
@@ -268,7 +270,7 @@ For “Create a mileage reimbursement for 18 miles,” no guide matches. The age
 
 While any mode is active, switching to portal v2 moves and renames the next control. The guide resolves the same capability to the new visual anchor, displays “Path updated,” and continues without replaying completed steps.
 
-### Story F — material heal
+### ~~Story F — material heal~~ ✅
 
 Portal v2 adds a required business-purpose field. The journey pauses, proposes a step, and requires repair approval. Autonomous execution does not continue while the repair is pending.
 
@@ -280,24 +282,24 @@ An expert starts recording, completes a short mileage workflow, adds narration, 
 
 ### P0: required for submission
 
-- Guest demo starts without authentication or credentials.
-- Task input accepts text and supported voice input.
-- The three modes are visibly distinct and enforced in domain logic.
-- Users can switch modes without losing work.
-- One approved recorded guide is seeded.
-- One on-demand journey can be created through WebMCP.
-- Recording captures a real semantic action trace and produces a reviewable guide draft.
-- The guide system includes spotlight, target outline, coach card, progress rail, attention marker, and control baton.
-- Speech output and captions work; text fallback is complete.
+- ~~Guest demo starts without authentication or credentials.~~ ✅
+- ~~Task input accepts text and supported voice input.~~ ✅
+- ~~The three modes are visibly distinct and enforced in domain logic.~~ ✅
+- ~~Users can switch modes without losing work.~~ ✅
+- ~~One approved recorded guide is seeded.~~ ✅
+- ~~One on-demand journey can be created through WebMCP.~~ ✅
+- ~~Recording captures a real semantic action trace and produces a reviewable guide draft.~~ ✅
+- ~~The guide system includes spotlight, target outline, coach card, progress rail, attention marker, and control baton.~~ ✅
+- ~~Speech output and captions work; text fallback is complete.~~ ✅
 - Cosmetic and material self-healing scenarios work from all three modes.
-- Sensitive submission requires in-page human confirmation.
-- All UI actions and WebMCP tools call the same domain action layer.
-- Journey state is authoritative on the server, revisioned, durable across refresh, and serialized per guest session.
-- Every mutation carries an idempotency key and expected revision; duplicate, stale, canceled, and ambiguous operations recover safely.
-- The accepted action trail is an append-only, replayable event log rather than a client-side activity list.
+- ~~Sensitive submission requires in-page human confirmation.~~ ✅
+- ~~All UI actions and WebMCP tools call the same domain action layer.~~ ✅
+- ~~Journey state is authoritative on the server, revisioned, durable across refresh, and serialized per guest session.~~ ✅
+- ~~Every mutation carries an idempotency key and expected revision; duplicate, stale, canceled, and ambiguous operations recover safely.~~ ✅
+- ~~The accepted action trail is an append-only, replayable event log rather than a client-side activity list.~~ ✅
 - A visible WebMCP status indicator says connected, unavailable, or tools need refresh.
-- Guest state can be reset deterministically.
-- The app works at desktop widths used by the in-app browser and remains usable on mobile.
+- ~~Guest state can be reset deterministically.~~ ✅
+- ~~The app works at desktop widths used by the in-app browser and remains usable on mobile.~~ ✅
 
 ### P1: only after every P0 acceptance check passes
 
@@ -305,7 +307,7 @@ An expert starts recording, completes a short mileage workflow, adds narration, 
 - Copyable demo prompts in the app.
 - Keyboard shortcut to change agency level.
 - A polished “Journey anatomy” developer panel showing live capability, pre/postconditions, and authority.
-- Same-session synchronization across two browser tabs.
+- ~~Same-session synchronization across two browser tabs.~~ ✅
 
 ### Not in submission scope
 
@@ -363,11 +365,11 @@ Tool names are short, descriptions state when and when not to call them, schemas
 
 The following are intentionally absent from the WebMCP surface:
 
-- confirm final expense submission;
-- publish an organization guide;
-- approve a material repair;
-- start recording sensitive activity; and
-- increase a persisted authority policy.
+- ~~confirm final expense submission;~~ ✅
+- ~~publish an organization guide;~~ ✅
+- ~~approve a material repair;~~ ✅
+- ~~start recording sensitive activity; and~~ ✅
+- ~~increase a persisted authority policy.~~ ✅
 
 ### Domain state
 
@@ -400,18 +402,18 @@ An anchor registry maps each `capabilityId` to the current React element for vis
 
 ## 11. Safety, privacy, and trust requirements
 
-- Every mutation validates current state, agency mode, capability availability, and risk on the application side.
-- Tool-call arguments are treated as untrusted input and validated at runtime.
-- Receipt text, expert narration, and user-provided labels are data, never executable instructions.
-- No tool accepts arbitrary URLs, selectors, HTML, code, or broad key/value payloads.
-- Tool descriptions and outputs avoid secrets and hidden implementation details.
-- The recorder explicitly starts and stops, displays a persistent indicator, and excludes credentials and sensitive field values.
-- The app never relies on agent confirmation for a sensitive consequence.
-- A pending repair or approval blocks later mutation tools.
-- A tool result reports an action as complete only after verifying committed state/postconditions.
+- ~~Every mutation validates current state, agency mode, capability availability, and risk on the application side.~~ ✅
+- ~~Tool-call arguments are treated as untrusted input and validated at runtime.~~ ✅
+- ~~Receipt text, expert narration, and user-provided labels are data, never executable instructions.~~ ✅
+- ~~No tool accepts arbitrary URLs, selectors, HTML, code, or broad key/value payloads.~~ ✅
+- ~~Tool descriptions and outputs avoid secrets and hidden implementation details.~~ ✅
+- ~~The recorder explicitly starts and stops, displays a persistent indicator, and excludes credentials and sensitive field values.~~ ✅
+- ~~The app never relies on agent confirmation for a sensitive consequence.~~ ✅
+- ~~A pending repair or approval blocks later mutation tools.~~ ✅
+- ~~A tool result reports an action as complete only after verifying committed state/postconditions.~~ ✅
 - The UI provides pause, undo for reversible changes, reset demo, and visible action history.
-- The experience remains keyboard operable and never communicates actor/risk/status by color alone.
-- Motion obeys `prefers-reduced-motion`; overlays cannot trap focus or block the instructed control.
+- ~~The experience remains keyboard operable and never communicates actor/risk/status by color alone.~~ ✅
+- ~~Motion obeys `prefers-reduced-motion`; overlays cannot trap focus or block the instructed control.~~ ✅
 
 ## 12. Visual and interaction design
 
@@ -426,18 +428,18 @@ The landing page must communicate the product in the first viewport and provide 
 1. **Hero:** the task sentence transforms into a paved path through `SHOW ME → WITH ME → FOR ME → DONE`; the dot travels along the route with scroll and pointer response.
 2. **Live product window:** a small interactive preview switches among the three modes and changes the control baton.
 3. **The broken-help problem:** static tutorial, all-or-nothing agent, and changing software shown as one visual sequence.
-4. **Three modes:** one shared journey, with the human/agent contribution visibly changing rather than three disconnected feature cards.
+4. ~~**Three modes:** one shared journey, with the human/agent contribution visibly changing rather than three disconnected feature cards.~~ ✅
 5. **Teach once or start now:** recorded and on-demand paths converge into the same journey model.
 6. **Self-healing morph:** an interface control moves and changes label while the semantic path remains attached; a material change opens review.
-7. **Built on WebMCP:** concise explanation and live tool-status proof, not a sponsor-logo wall.
+7. ~~**Built on WebMCP:** concise explanation and live tool-status proof, not a sponsor-logo wall.~~ ✅
 8. **Final CTA:** open the guest demo and copy the recommended ChatGPT prompt.
 
 ### App layout
 
-- **Top bar:** brand, WebMCP status, portal version/demo update control, reset.
-- **Main work surface:** Acme Expense Portal, fully interactive without the agent.
+- ~~**Top bar:** brand, WebMCP status, portal version/demo update control, reset.~~ ✅
+- ~~**Main work surface:** Acme Expense Portal, fully interactive without the agent.~~ ✅
 - **Guide dock:** goal, source, mode selector, current step, explanation, progress, actor, pause.
-- **Action trail:** real state changes and repairs, with actor and time.
+- ~~**Action trail:** real state changes and repairs, with actor and time.~~ ✅
 - **Voice control:** compact microphone/waveform with visible transcript and mute.
 - **Recorder drawer:** deliberate record control, captured semantic events, narration, review/publish.
 - **Repair review:** diff card anchored to the affected journey step.
@@ -446,8 +448,8 @@ The landing page must communicate the product in the first viewport and provide 
 
 - Use CSS/SVG and Motion for three signature effects: path drawing, semantic-anchor movement, and control-baton handoff.
 - Keep motion purposeful, interruptible, and under 400 ms for task interactions.
-- Never hijack the cursor or scroll.
-- Avoid a video background and heavy 3D libraries; preserve fast first load.
+- ~~Never hijack the cursor or scroll.~~ ✅
+- ~~Avoid a video background and heavy 3D libraries; preserve fast first load.~~ ✅
 - Target Lighthouse performance and accessibility scores of 90 or higher on the deployed desktop experience.
 
 ## 13. Measurement and acceptance gates
@@ -456,16 +458,16 @@ The landing page must communicate the product in the first viewport and provide 
 
 - All seven demo stories pass after a clean reset.
 - Each of the three modes passes before and after the cosmetic update.
-- Each mode stops correctly at the material update and final confirmation.
-- Switching modes preserves verified progress in all pairwise transitions.
+- ~~Each mode stops correctly at the material update and final confirmation.~~ ✅
+- ~~Switching modes preserves verified progress in all pairwise transitions.~~ ✅
 - A journey cannot reference an unknown capability.
-- SHOW ME rejects agent domain mutations.
-- No WebMCP path can finalize expense submission, publish a guide, or approve a material repair.
-- The app remains usable when WebMCP and speech recognition are unavailable.
-- Refresh restores the authoritative journey and pending control boundary.
-- Concurrent commands from one revision produce one accepted transition and one explicit stale-state result.
-- Repeating an operation ID produces no duplicate event or domain effect.
-- Replaying the append-only event log reproduces the stored snapshot and verifies its hash chain.
+- ~~SHOW ME rejects agent domain mutations.~~ ✅
+- ~~No WebMCP path can finalize expense submission, publish a guide, or approve a material repair.~~ ✅
+- ~~The app remains usable when WebMCP and speech recognition are unavailable.~~ ✅
+- ~~Refresh restores the authoritative journey and pending control boundary.~~ ✅
+- ~~Concurrent commands from one revision produce one accepted transition and one explicit stale-state result.~~ ✅
+- ~~Repeating an operation ID produces no duplicate event or domain effect.~~ ✅
+- ~~Replaying the append-only event log reproduces the stored snapshot and verifies its hash chain.~~ ✅
 - Random command-sequence tests preserve the invariants that agents never create sensitive events and unapproved repairs never resume work.
 
 ### WebMCP quality acceptance

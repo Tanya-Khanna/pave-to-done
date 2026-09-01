@@ -4,6 +4,8 @@
 **Architecture:** top-level WebMCP client + Cloudflare Worker + one Durable Object per guest journey  
 **Primary quality goal:** make every human and agent action safe to retry, observable, recoverable, and derived from one authoritative state machine
 
+> **Implementation audit — September 1, 2026:** ~~Struck-through items~~ ✅ have direct implementation or test evidence. Unstruck specification remains incomplete, partially implemented, or not yet verified. Combined requirements remain unstruck when any clause is still open.
+
 ## 1. Engineering thesis
 
 The difficult part of `pave.to(done)` is not registering many tools. It is maintaining a correct shared task while a probabilistic agent, a person, the UI, and a changing application can all produce state transitions.
@@ -50,10 +52,10 @@ flowchart LR
 
 ### Selected runtime
 
-- React + TypeScript + Vite.
-- Cloudflare Vite plugin and Worker runtime.
-- Cloudflare Durable Objects for one serialized journey coordinator per guest session.
-- Durable Object storage for snapshot, idempotency records, and event log.
+- ~~React + TypeScript + Vite.~~ ✅
+- ~~Cloudflare Vite plugin and Worker runtime.~~ ✅
+- ~~Cloudflare Durable Objects for one serialized journey coordinator per guest session.~~ ✅
+- ~~Durable Object storage for snapshot, idempotency records, and event log.~~ ✅
 - Zod as the source for runtime contracts; checked JSON Schema generated for WebMCP.
 - Motion/CSS/SVG for interface motion.
 - Vitest, Testing Library, fast-check, and Playwright.
@@ -204,37 +206,37 @@ Each guest receives a cryptographically random session ID. No PII or real expens
 For every command, the Durable Object:
 
 1. validates request size, content type, origin, and schema;
-2. rate-limits the session;
-3. looks up `operationId`;
-4. returns the original result if the operation already committed;
-5. compares `expectedRevision` to the authoritative revision;
-6. revalidates actor, agency mode, current step, risk, preconditions, and portal version;
-7. runs the pure `decide` function;
-8. appends events and updates the snapshot in one storage transaction;
-9. stores the idempotent result;
-10. returns the new snapshot projection and next control boundary.
+2. ~~rate-limits the session;~~ ✅
+3. ~~looks up `operationId`;~~ ✅
+4. ~~returns the original result if the operation already committed;~~ ✅
+5. ~~compares `expectedRevision` to the authoritative revision;~~ ✅
+6. ~~revalidates actor, agency mode, current step, risk, preconditions, and portal version;~~ ✅
+7. ~~runs the pure `decide` function;~~ ✅
+8. ~~appends events and updates the snapshot in one storage transaction;~~ ✅
+9. ~~stores the idempotent result;~~ ✅
+10. ~~returns the new snapshot projection and next control boundary.~~ ✅
 
 ### Concurrency and stale state
 
-- Each accepted command increments the revision exactly once.
-- Two commands using the same prior revision cannot both mutate the journey.
-- A stale command receives `STALE_REVISION` with the current revision and a bounded state summary.
-- The client refreshes and re-evaluates; it never blindly resubmits a mutation under a new revision.
-- Repeating the same `operationId` returns the original result and creates no second event.
+- ~~Each accepted command increments the revision exactly once.~~ ✅
+- ~~Two commands using the same prior revision cannot both mutate the journey.~~ ✅
+- ~~A stale command receives `STALE_REVISION` with the current revision and a bounded state summary.~~ ✅
+- ~~The client refreshes and re-evaluates; it never blindly resubmits a mutation under a new revision.~~ ✅
+- ~~Repeating the same `operationId` returns the original result and creates no second event.~~ ✅
 
 ### Cancellation and ambiguous outcomes
 
 WebMCP `execute` receives an `AbortSignal`, which is passed to fetch. The operation ID is saved before the request begins.
 
-- If canceled before dispatch, no command is sent.
-- If the server returns a result, the client clears the pending operation.
-- If cancellation or network failure occurs after dispatch, the UI reports **Outcome unknown—reconciling**.
+- ~~If canceled before dispatch, no command is sent.~~ ✅
+- ~~If the server returns a result, the client clears the pending operation.~~ ✅
+- ~~If cancellation or network failure occurs after dispatch, the UI reports **Outcome unknown—reconciling**.~~ ✅
 - The next state read checks the operation record/event log before allowing a retry.
-- A mutation is never labeled failed and automatically repeated when it may have committed.
+- ~~A mutation is never labeled failed and automatically repeated when it may have committed.~~ ✅
 
 ## 6. Policy and human control
 
-### Policy table
+### ~~Policy table~~ ✅
 
 | Capability risk     | SHOW ME       | DO IT WITH ME                    | DO IT FOR ME                         |
 | ------------------- | ------------- | -------------------------------- | ------------------------------------ |
@@ -247,16 +249,16 @@ WebMCP `execute` receives an `AbortSignal`, which is passed to fetch. The operat
 
 The policy is enforced in the state machine, not only by hiding controls or omitting tools.
 
-### Human confirmation ceremony
+### ~~Human confirmation ceremony~~ ✅
 
 `prepare_expense_submission` creates a server-side pending confirmation containing a one-time challenge and an expiry. The WebMCP result returns the visible summary but not a finalization tool.
 
 The confirmation button:
 
-1. verifies a real transient `navigator.userActivation.isActive` state;
-2. displays amount, receipt, category, project, and consequence;
-3. sends `ConfirmExpenseSubmission` from the UI surface with the challenge;
-4. invalidates the challenge after one use or expiry.
+1. ~~verifies a real transient `navigator.userActivation.isActive` state;~~ ✅
+2. ~~displays amount, receipt, category, project, and consequence;~~ ✅
+3. ~~sends `ConfirmExpenseSubmission` from the UI surface with the challenge;~~ ✅
+4. ~~invalidates the challenge after one use or expiry.~~ ✅
 
 This produces a defensible human-control boundary for the WebMCP workflow without claiming protection against arbitrary local script execution.
 
@@ -299,7 +301,7 @@ An agent may propose a repair, but the server rejects a proposal that:
 
 Approval writes a `RepairApproved` event; the compiler then rebuilds only the remaining projection.
 
-### Tamper-evident history
+### ~~Tamper-evident history~~ ✅
 
 Each event hash covers a canonical serialization of the previous hash, revision, actor, event type, safe payload, and timestamp. On replay, the server verifies the chain before trusting the projection. The UI exposes the chain status as **History verified**, not the raw hashes by default.
 
@@ -320,54 +322,54 @@ The recording projection includes:
 
 ## 9. WebMCP adapter
 
-### Tool groups
+### ~~Tool groups~~ ✅
 
 Tools are exposed according to current route and state. Dynamic registration reduces ambiguity, while the server remains the final authorization boundary.
 
 **Always available on `/demo`:**
 
-- `get_app_context`
-- `list_capabilities`
-- `list_guides`
-- `get_journey`
-- `set_agency_mode`
+- ~~`get_app_context`~~ ✅
+- ~~`list_capabilities`~~ ✅
+- ~~`list_guides`~~ ✅
+- ~~`get_journey`~~ ✅
+- ~~`set_agency_mode`~~ ✅
 
 **Journey planning:**
 
-- `create_journey`
+- ~~`create_journey`~~ ✅
 
 **Current-step tools, registered only when applicable:**
 
-- `show_guidance`
-- `create_expense_draft`
-- `update_expense_draft`
-- `prepare_expense_submission`
-- `propose_journey_repair`
+- ~~`show_guidance`~~ ✅
+- ~~`create_expense_draft`~~ ✅
+- ~~`update_expense_draft`~~ ✅
+- ~~`prepare_expense_submission`~~ ✅
+- ~~`propose_journey_repair`~~ ✅
 
 **Recording review:**
 
-- `get_recording_trace`
-- `save_guide_draft`
+- ~~`get_recording_trace`~~ ✅
+- ~~`save_guide_draft`~~ ✅
 
 Sensitive confirmation, repair approval, recording start, and guide publication are never registered.
 
 ### Lifecycle
 
-- One `AbortController` owns route-level tools.
-- A separate controller owns state-scoped tools and is replaced when availability changes.
-- Registration errors are captured and surfaced as diagnostics.
-- Component teardown and route navigation abort registration.
-- Tool execution uses the callback's signal for request cancellation.
+- ~~One `AbortController` owns route-level tools.~~ ✅
+- ~~A separate controller owns state-scoped tools and is replaced when availability changes.~~ ✅
+- ~~Registration errors are captured and surfaced as diagnostics.~~ ✅
+- ~~Component teardown and route navigation abort registration.~~ ✅
+- ~~Tool execution uses the callback's signal for request cancellation.~~ ✅
 - Strict Mode remount tests prove there are no duplicate registrations.
-- Tool names and schemas remain stable within a capability-manifest version.
+- ~~Tool names and schemas remain stable within a capability-manifest version.~~ ✅
 
 ### Schema discipline
 
 - Zod definitions generate JSON Schema to avoid drift.
-- Server parses the same logical contract independently; exposed schema is never treated as a security boundary.
-- Objects reject additional properties.
+- ~~Server parses the same logical contract independently; exposed schema is never treated as a security boundary.~~ ✅
+- ~~Objects reject additional properties.~~ ✅
 - Strings, arrays, amounts, and event lists are bounded.
-- Tools never accept selectors, URLs, HTML, code, generic action names, or arbitrary key/value input.
+- ~~Tools never accept selectors, URLs, HTML, code, generic action names, or arbitrary key/value input.~~ ✅
 
 ### Result envelope
 
@@ -405,15 +407,15 @@ The text and structured result agree. Normal output stays under 1.5 KB. Raw upst
 
 ## 10. Client state and UX correctness
 
-- The UI renders an authoritative snapshot and its revision.
+- ~~The UI renders an authoritative snapshot and its revision.~~ ✅
 - Commands enter a pending state; double submission is disabled.
-- No speculative success is shown before server acknowledgement.
-- On `STALE_REVISION`, the client refreshes and explains what changed.
-- `BroadcastChannel` shares accepted snapshots between same-origin tabs for the same guest session.
-- Reconnect loads snapshot plus events after the last known revision.
-- The action trail renders accepted server events, not local click logs.
-- Guidance position is client presentation state; journey progress is server state.
-- `ResizeObserver`, scroll listeners, and semantic React refs keep the visual anchor current.
+- ~~No speculative success is shown before server acknowledgement.~~ ✅
+- ~~On `STALE_REVISION`, the client refreshes and explains what changed.~~ ✅
+- ~~`BroadcastChannel` shares accepted snapshots between same-origin tabs for the same guest session.~~ ✅
+- ~~Reconnect loads snapshot plus events after the last known revision.~~ ✅
+- ~~The action trail renders accepted server events, not local click logs.~~ ✅
+- ~~Guidance position is client presentation state; journey progress is server state.~~ ✅
+- ~~`ResizeObserver`, scroll listeners, and semantic React refs keep the visual anchor current.~~ ✅
 
 ## 11. Observability
 
@@ -453,20 +455,20 @@ This makes engineering visible to judges without turning the product into a deve
 
 ## 12. Security controls
 
-- same-origin tools only; no `exposedTo` cross-origin list;
-- `Permissions-Policy: tools=(self)`;
-- exact `Origin` checks on mutating API requests;
-- cryptographically random guest session IDs and bounded seven-day retention;
-- rate and request-size limits;
-- client and server schema validation;
-- React text rendering only; no `dangerouslySetInnerHTML`;
-- `untrustedContentHint` on receipts and recording traces;
-- `readOnlyHint` on all read tools;
-- sensitive actions omitted from tools and guarded by human activation/challenge;
-- server policy enforcement independent of visible controls;
-- CSP and secure response headers;
+- ~~same-origin tools only; no `exposedTo` cross-origin list;~~ ✅
+- ~~`Permissions-Policy: tools=(self)`;~~ ✅
+- ~~exact `Origin` checks on mutating API requests;~~ ✅
+- ~~cryptographically random guest session IDs and bounded seven-day retention;~~ ✅
+- ~~rate and request-size limits;~~ ✅
+- ~~client and server schema validation;~~ ✅
+- ~~React text rendering only; no `dangerouslySetInnerHTML`;~~ ✅
+- ~~`untrustedContentHint` on receipts and recording traces;~~ ✅
+- ~~`readOnlyHint` on all read tools;~~ ✅
+- ~~sensitive actions omitted from tools and guarded by human activation/challenge;~~ ✅
+- ~~server policy enforcement independent of visible controls;~~ ✅
+- ~~CSP and secure response headers;~~ ✅
 - sanitized/redacted logs and outputs;
-- no secrets, personal accounts, external URLs, or real financial operations in the demo.
+- ~~no secrets, personal accounts, external URLs, or real financial operations in the demo.~~ ✅
 
 Threats explicitly tested: prompt injection in receipt notes, duplicate calls, stale calls, out-of-order calls, mode escalation, repair risk downgrade, replayed confirmation, cross-session access, oversized strings, cancellation after dispatch, and route navigation while a tool is active.
 
@@ -477,7 +479,7 @@ Threats explicitly tested: prompt injection in receipt notes, duplicate calls, s
 - every command transition and rejection;
 - capability manifest compatibility rules;
 - guide compiler outcomes;
-- event hashing and replay;
+- ~~event hashing and replay;~~ ✅
 - redaction and bounded result formatting;
 - tool schema generation and annotations.
 
@@ -526,8 +528,8 @@ Generate random valid/invalid command sequences and verify:
 - recorded and on-demand sources;
 - cosmetic and material portal migrations;
 - mode changes mid-journey;
-- WebMCP unsupported fallback;
-- keyboard, reduced motion, and responsive layout;
+- ~~WebMCP unsupported fallback;~~ ✅
+- ~~keyboard, reduced motion, and responsive layout;~~ ✅
 - deployed ChatGPT browser and Chrome DevTools WebMCP panel.
 
 ## 14. CI and release quality gates
