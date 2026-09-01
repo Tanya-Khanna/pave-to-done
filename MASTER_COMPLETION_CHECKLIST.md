@@ -15,8 +15,11 @@
 ## Current progress
 
 **Active step:** Step 1 — Architecture and platform gaps  
-**Completed in Step 1:** 6 of 9 items  
-**External verification still required:** authorize Wrangler for the claimed Cloudflare account, deploy this commit, and connect the Chrome browser extension so the Chrome 149+ WebMCP check can run. The currently deployed build was verified as top-level with working WebMCP, but it predates the new `Origin-Agent-Cluster` header and reports `window.originAgentCluster === false`.
+**Completed in Step 1:** 7 of 9 items
+
+**Current deployment:** Cloudflare version `710c2aef-a1d2-4b16-9143-686aa51b4d89` at `https://pave-to-done.north-raincoat.workers.dev`. Live verification passed health, persistence, exactly-once handling, stale-revision rejection, event history, security headers, top-level delivery, and WebMCP discovery.
+
+**External verification still required:** connect the Chrome browser extension so the Chrome 149+ WebMCP check can run, then open a fresh browser process to confirm `window.originAgentCluster === true`. The deployed response now serves `Origin-Agent-Cluster: ?1`, but the existing in-app browser process had already loaded this origin before the header was introduced and continues to report `false` for that process.
 
 ## 1. Architecture and platform gaps
 
@@ -28,7 +31,7 @@
 - [ ] Verify the application in Chrome 149+ with WebMCP enabled.
 - [ ] Serve and verify `Origin-Agent-Cluster: ?1`.
 - [x] Display `window.originAgentCluster` in the diagnostics panel. — Evidence: `useWebMCPTools` captures the runtime value and `DiagnosticPanel` renders `isolated` or `not isolated`; type-check and production build pass.
-- [ ] Perform the final test on the exact deployed top-level URL, outside an iframe.
+- [x] Perform the final test on the exact deployed top-level URL, outside an iframe. — Evidence: the in-app browser loaded `https://pave-to-done.north-raincoat.workers.dev/demo`, reported `self === top`, and discovered the generated WebMCP tool surface from Cloudflare version `710c2aef-a1d2-4b16-9143-686aa51b4d89`.
 
 ## 2. Repository and deployment foundation
 
