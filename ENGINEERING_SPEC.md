@@ -57,7 +57,7 @@ flowchart LR
 - ~~Cloudflare Durable Objects for one serialized journey coordinator per guest session.~~ ✅
 - ~~Durable Object storage for snapshot, idempotency records, and event log.~~ ✅
 - Zod as the source for runtime contracts; checked JSON Schema generated for WebMCP.
-- Motion/CSS/SVG for interface motion.
+- CSS/SVG for interface motion, including the three signature effects; no runtime animation dependency is required for the two-route submission build.
 - Vitest, Testing Library, fast-check, and Playwright.
 
 ### Why Durable Objects

@@ -960,7 +960,14 @@ function DiagnosticPanel({
   onClose,
 }: {
   snapshot: JourneySnapshot;
-  webmcp: { supported: boolean; state: string; registered: string[]; error?: string };
+  webmcp: {
+    supported: boolean;
+    state: string;
+    registered: string[];
+    topLevel: boolean;
+    originAgentCluster: boolean;
+    error?: string;
+  };
   invocation: {
     name: string;
     status: string;
@@ -1000,6 +1007,18 @@ function DiagnosticPanel({
         <article>
           <span>MANIFEST</span>
           <b>{snapshot.capabilityManifestVersion.replace("manifest.", "")}</b>
+        </article>
+        <article>
+          <span>PAGE</span>
+          <b className={webmcp.topLevel ? "good" : "warn"}>
+            {webmcp.topLevel ? "top-level" : "embedded"}
+          </b>
+        </article>
+        <article>
+          <span>ORIGIN</span>
+          <b className={webmcp.originAgentCluster ? "good" : "warn"}>
+            {webmcp.originAgentCluster ? "isolated" : "not isolated"}
+          </b>
         </article>
       </div>
       <section>

@@ -21,12 +21,12 @@ Every hour before the internal freeze serves that loop. A feature is complete on
 ### Stack
 
 - **Frontend:** React, TypeScript, Vite.
-- **Routing:** React Router with `/` for the landing page and `/demo` for the product.
-- **Animation:** Motion for the three signature animations; CSS/SVG for the rest.
+- **Routing:** a deliberately small History API route boundary for the two static surfaces, `/` and `/demo`. This avoids a routing dependency while preserving back/forward navigation and direct deep links; add React Router only if the route graph grows.
+- **Animation:** CSS/SVG for the three signature animations and all supporting motion. The shipped effects need no runtime animation dependency and retain explicit reduced-motion behavior.
 - **Authoritative state:** one Cloudflare Durable Object per guest journey, using transactional storage for the revisioned snapshot, idempotency records, and append-only events.
 - **Server:** Cloudflare Worker router deployed with the Cloudflare Vite plugin.
 - **Validation:** Zod for shared contracts, generated JSON Schema for WebMCP, and independent runtime parsing at both client and server boundaries.
-- **Tests:** Vitest, React Testing Library, fast-check property tests, Miniflare/Worker integration tests, and Playwright.
+- **Tests:** Vitest, React Testing Library, fast-check property tests, direct Worker-entrypoint integration tests with production request/response objects, and Playwright. The entrypoint tests are the lightweight Miniflare-equivalent boundary for this single Worker; deployed verification covers the Cloudflare runtime.
 - **Hosting:** Cloudflare Workers on HTTPS. The guest flow needs no account, API key, or paid model call.
 - **Agent:** ChatGPT's in-app browser supplies the reasoning agent through WebMCP. Chrome 149+ with the testing flag is the second supported path.
 - **Voice:** browser Speech Synthesis plus SpeechRecognition where available; complete text and caption fallback.

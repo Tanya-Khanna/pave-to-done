@@ -446,7 +446,7 @@ The landing page must communicate the product in the first viewport and provide 
 
 ### Motion rules
 
-- Use CSS/SVG and Motion for three signature effects: path drawing, semantic-anchor movement, and control-baton handoff.
+- Use CSS/SVG for three signature effects: path drawing, semantic-anchor movement, and control-baton handoff.
 - Keep motion purposeful, interruptible, and under 400 ms for task interactions.
 - ~~Never hijack the cursor or scroll.~~ ✅
 - ~~Avoid a video background and heavy 3D libraries; preserve fast first load.~~ ✅
