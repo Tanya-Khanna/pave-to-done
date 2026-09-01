@@ -28,6 +28,7 @@ test("Portal v2 preserves progress and requires repair approval", async ({ page 
   await page.getByRole("button", { name: "Use $86.00" }).click();
   await page.getByRole("button", { name: "Choose Project Atlas" }).click();
   await page.getByRole("button", { name: "Choose Client meal" }).click();
+  await expect(page.getByRole("button", { name: "Prepare for my review" })).toBeVisible();
 
   await page.getByRole("button", { name: "Simulate Portal v2" }).click();
   await expect(page.getByText("PORTAL CHANGE DETECTED")).toBeVisible();

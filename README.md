@@ -66,6 +66,8 @@ WebMCP is not a remote-control attachment here. It is the contract that lets the
 
 Remove WebMCP and the core loop disappears: the agent can no longer inspect the site's authoritative state, follow or repair the journey, act through product-defined operations, or verify that the visible application reached the promised result.
 
+![The deployed demo running inside ChatGPT's in-app browser with the WebMCP ready indicator visible](./docs/assets/webmcp-live.png)
+
 ## WebMCP surface
 
 Thirteen small tools are registered only when they are relevant.

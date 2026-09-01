@@ -25,4 +25,6 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run test:e2e
+        env:
+          PLAYWRIGHT_BASE_URL: https://pave-to-done.snapdragon-ancient.workers.dev
       - run: npm run build

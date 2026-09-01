@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+const remoteBaseURL = process.env.PLAYWRIGHT_BASE_URL;
+
 export default defineConfig({
   testDir: "./e2e",
   timeout: 30_000,
@@ -8,18 +10,20 @@ export default defineConfig({
   workers: 1,
   reporter: [["list"], ["html", { open: "never" }]],
   use: {
-    baseURL: "http://127.0.0.1:5173",
+    baseURL: remoteBaseURL ?? "http://127.0.0.1:5173",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
     video: "retain-on-failure",
   },
-  webServer: {
-    command:
-      "npm run build && npx wrangler dev --config dist/pave_to_done/wrangler.json --ip 127.0.0.1 --port 5173",
-    url: "http://127.0.0.1:5173/api/health",
-    reuseExistingServer: true,
-    timeout: 60_000,
-  },
+  webServer: remoteBaseURL
+    ? undefined
+    : {
+        command:
+          "npm run build && npx wrangler dev --config dist/pave_to_done/wrangler.json --ip 127.0.0.1 --port 5173",
+        url: "http://127.0.0.1:5173/api/health",
+        reuseExistingServer: true,
+        timeout: 60_000,
+      },
   projects: [
     {
       name: "chromium",

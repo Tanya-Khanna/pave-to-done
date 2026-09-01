@@ -5,10 +5,13 @@ test("an expert records semantic actions and a person publishes the reviewed gui
 }) => {
   await page.goto("/demo");
   await page.getByRole("button", { name: "Record", exact: true }).click();
+  await expect(page.getByText(/0 semantic actions · recording/)).toBeVisible();
   await page.getByRole("button", { name: "Start shared journey" }).click();
   await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
   await page.getByRole("button", { name: "Use $86.00" }).click();
+  await expect(page.getByRole("button", { name: "Choose Project Atlas" })).toBeVisible();
   await page.getByRole("button", { name: "Stop" }).click();
+  await expect(page.getByText(/2 semantic actions · review/)).toBeVisible();
 
   const result = await page.evaluate(async () => {
     const sessionId = sessionStorage.getItem("pave.session.v1")!;
