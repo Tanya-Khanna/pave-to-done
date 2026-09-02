@@ -1115,6 +1115,14 @@ summary:focus-visible {
   align-items: center;
   font-size: 12px;
 }
+.dock-header .dock-actions {
+  gap: 6px;
+}
+.dock-header .dock-actions .icon-button.active {
+  color: var(--coral);
+  border-color: rgba(255, 112, 95, 0.45);
+  background: rgba(255, 112, 95, 0.1);
+}
 .dock-signal {
   width: 25px;
   height: 25px;
@@ -1183,8 +1191,42 @@ summary:focus-visible {
 .journey-control,
 .confirmation-card,
 .repair-card,
+.paused-card,
 .completion-card {
   padding: 14px;
+}
+.paused-card {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+}
+.paused-card > div {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  color: var(--coral);
+  border: 1px solid rgba(255, 112, 95, 0.35);
+  border-radius: 50%;
+  background: rgba(255, 112, 95, 0.08);
+}
+.paused-card > span {
+  color: var(--coral);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+.paused-card h2,
+.paused-card p {
+  margin: 0;
+}
+.paused-card h2 {
+  font-size: 17px;
+}
+.paused-card p {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.55;
 }
 .source-toggle {
   display: grid;

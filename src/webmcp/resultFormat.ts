@@ -7,6 +7,13 @@ export interface NextControlBoundary {
 }
 
 export function nextControlBoundary(snapshot: JourneySnapshot): NextControlBoundary {
+  if (snapshot.status === "paused")
+    return {
+      actor: "human",
+      action: "resume_journey_in_ui",
+      reason:
+        "The journey is paused and only a person can resume it from the visible Journey dock.",
+    };
   if (snapshot.status === "awaiting_confirmation")
     return {
       actor: "human",
@@ -65,7 +72,7 @@ function safeSummary(snapshot: JourneySnapshot) {
           risk: step.risk,
         }
       : null,
-    needsHuman: ["awaiting_confirmation", "repair_required"].includes(snapshot.status),
+    needsHuman: ["paused", "awaiting_confirmation", "repair_required"].includes(snapshot.status),
     historyVerified: snapshot.historyVerified,
   };
 }
@@ -124,7 +131,9 @@ export function commandResult(summary: string, result: CommandResult) {
       },
     };
   }
-  const needsHuman = ["awaiting_confirmation", "repair_required"].includes(result.snapshot.status);
+  const needsHuman = ["paused", "awaiting_confirmation", "repair_required"].includes(
+    result.snapshot.status,
+  );
   return {
     content: [{ type: "text", text: summary }],
     structuredContent: {

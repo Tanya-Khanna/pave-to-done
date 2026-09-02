@@ -17,6 +17,11 @@ function requireActive(snapshot: JourneySnapshot): Decision | null {
     return fail("PRECONDITION_FAILED", "Start a journey first.");
   if (snapshot.status === "repair_required")
     return fail("REPAIR_REQUIRED", "Review the portal repair before continuing.");
+  if (snapshot.status === "paused")
+    return fail(
+      "AWAITING_HUMAN",
+      "This journey is paused. A person must resume it from the visible Journey dock before work can continue.",
+    );
   if (snapshot.status === "awaiting_confirmation")
     return fail("AWAITING_HUMAN", "A person must review the prepared submission.");
   if (snapshot.status === "completed")
@@ -42,7 +47,7 @@ function canRunCurrent(
   if (!actorMayExecute(envelope.actor, snapshot.agencyMode, step.risk, step)) {
     return fail(
       "POLICY_DENIED",
-      `${envelope.actor.kind} cannot perform this step in ${snapshot.agencyMode} mode.`,
+      `${envelope.actor.kind} cannot perform ${step.capabilityId} in ${snapshot.agencyMode} mode. Current control belongs to ${step.assignedActor}; ${step.title} must be completed next.`,
     );
   }
   return null;
@@ -97,14 +102,51 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
           "AWAITING_HUMAN",
           "Finish or reset the pending confirmation before changing modes.",
         );
+      if (command.mode === snapshot.agencyMode) return { ok: true, events: [] };
+      if (actor.kind === "agent") {
+        const authority = { show: 0, with: 1, for: 2 } as const;
+        if (authority[command.mode] > authority[snapshot.agencyMode])
+          return fail(
+            "AWAITING_HUMAN",
+            `Changing from ${snapshot.agencyMode} to ${command.mode} expands agent authority. A person must select that mode in the visible Journey dock.`,
+          );
+      }
       return {
         ok: true,
         events: [{ type: "AgencyModeChanged", safePayload: { mode: command.mode } }],
       };
 
+    case "SetJourneyPaused": {
+      if (actor.kind !== "human" || actor.surface !== "ui")
+        return fail("POLICY_DENIED", "Only the visible human UI can pause or resume a journey.");
+      if (!snapshot.source || snapshot.status === "idle")
+        return fail("PRECONDITION_FAILED", "Start a journey before pausing it.");
+      if (command.paused) {
+        if (snapshot.status === "paused")
+          return fail("PRECONDITION_FAILED", "This journey is already paused.");
+        if (!["active", "awaiting_user"].includes(snapshot.status))
+          return fail(
+            "AWAITING_HUMAN",
+            `The journey cannot be paused while it is ${snapshot.status.replaceAll("_", " ")}. Resolve that human boundary first.`,
+          );
+        return {
+          ok: true,
+          events: [
+            {
+              type: "JourneyPaused",
+              safePayload: { pausedFrom: snapshot.status },
+            },
+          ],
+        };
+      }
+      if (snapshot.status !== "paused")
+        return fail("PRECONDITION_FAILED", "This journey is not paused.");
+      return { ok: true, events: [{ type: "JourneyResumed", safePayload: {} }] };
+    }
+
     case "ShowGuidance": {
       const active = requireActive(snapshot);
-      if (active && snapshot.status !== "awaiting_confirmation") return active;
+      if (active) return active;
       const step = currentStep(snapshot);
       if (!step) return fail("NOT_FOUND", "There is no step to explain.");
       return {

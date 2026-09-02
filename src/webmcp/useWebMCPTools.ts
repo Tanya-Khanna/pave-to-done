@@ -313,7 +313,12 @@ export function useWebMCPTools({ snapshot, snapshotRef, command, enabled }: UseT
       });
     }
 
-    if (step && !["repair_required", "completed", "blocked"].includes(value.status)) {
+    if (
+      step &&
+      !["paused", "repair_required", "awaiting_confirmation", "completed", "blocked"].includes(
+        value.status,
+      )
+    ) {
       tools.push({
         name: "show_guidance",
         title: "Show the next step",
@@ -334,7 +339,7 @@ export function useWebMCPTools({ snapshot, snapshotRef, command, enabled }: UseT
 
     if (
       step &&
-      !["repair_required", "awaiting_confirmation", "completed", "blocked"].includes(
+      !["paused", "repair_required", "awaiting_confirmation", "completed", "blocked"].includes(
         value.status,
       ) &&
       actorMayExecute(agent, value.agencyMode, step.risk, step)

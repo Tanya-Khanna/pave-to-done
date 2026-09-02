@@ -8,6 +8,7 @@ export type JourneyStatus =
   | "planning"
   | "active"
   | "awaiting_user"
+  | "paused"
   | "awaiting_confirmation"
   | "repair_required"
   | "completed"
@@ -160,6 +161,7 @@ export interface JourneySnapshot {
   goal: string;
   agencyMode: AgencyMode;
   status: JourneyStatus;
+  pausedFrom?: "active" | "awaiting_user";
   steps: JourneyStep[];
   expense: ExpenseProjection;
   pendingRepair?: Repair;
@@ -176,6 +178,7 @@ export type ExpenseField = "date" | "amount" | "project" | "category" | "busines
 export type JourneyCommand =
   | { type: "StartJourney"; source: JourneySource; mode?: AgencyMode }
   | { type: "ChangeAgencyMode"; mode: AgencyMode }
+  | { type: "SetJourneyPaused"; paused: boolean }
   | { type: "ShowGuidance" }
   | { type: "CreateExpenseDraft"; date: string; amount: number }
   | { type: "UpdateExpenseDraft"; field: ExpenseField; value: string | number }

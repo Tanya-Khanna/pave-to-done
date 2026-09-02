@@ -65,6 +65,7 @@ export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySn
         goal: String(event.safePayload.goal),
         agencyMode: event.safePayload.mode as JourneySnapshot["agencyMode"],
         status: "active",
+        pausedFrom: undefined,
         steps: event.safePayload.steps as JourneyStep[],
         pendingRepair: undefined,
         pendingConfirmation: undefined,
@@ -78,6 +79,20 @@ export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySn
           status: "empty",
           expenseId: undefined,
         },
+      };
+      break;
+    case "JourneyPaused":
+      next = {
+        ...next,
+        status: "paused",
+        pausedFrom: event.safePayload.pausedFrom as "active" | "awaiting_user",
+      };
+      break;
+    case "JourneyResumed":
+      next = {
+        ...next,
+        status: next.pausedFrom === "awaiting_user" ? "awaiting_user" : "active",
+        pausedFrom: undefined,
       };
       break;
     case "AgencyModeChanged":

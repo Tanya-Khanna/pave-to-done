@@ -77,7 +77,7 @@ Thirteen small tools are registered only when they are relevant.
 | Scope                             | Tools                                                                                         |
 | --------------------------------- | --------------------------------------------------------------------------------------------- |
 | Read current page and task        | `get_app_context`, `list_capabilities`, `list_guides`, `get_journey`                          |
-| Choose collaboration policy       | `set_agency_mode`                                                                             |
+| Choose collaboration policy       | `set_agency_mode` (agents may reduce authority; the visible UI must approve an expansion)     |
 | Plan a task                       | `create_journey`                                                                              |
 | Guide or execute the current step | `show_guidance`, `create_expense_draft`, `update_expense_draft`, `prepare_expense_submission` |
 | Repair a changed journey          | `propose_journey_repair`                                                                      |

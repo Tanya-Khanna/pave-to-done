@@ -14,13 +14,13 @@
 
 ## Current progress
 
-**Active step:** Step 4 — WebMCP contract completion (with one external-browser check still pending in Step 1)
+**Active step:** Step 5 — Three agency modes (with Chrome verification pending in Step 1 and mileage bounds deferred from Step 4 to Step 9)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
 **Completed in Step 4:** 19 of 20 items
 
-**Current deployment:** Cloudflare version `b7e4036e-3969-48d8-8174-7201135c6786` from verified GitHub commit `5c4bece` at `https://pave-to-done.north-raincoat.workers.dev`. Live verification passed health, persistence, exactly-once handling, stale-revision rejection, event history, security headers, top-level delivery, and WebMCP discovery.
+**Current deployment:** Cloudflare version `6acae43e-cd32-46b9-a9f4-b09589d6aab7` from verified GitHub commit `c4b9129` at `https://pave-to-done.north-raincoat.workers.dev`. Live verification passed health, persistence, exactly-once handling, stale-revision rejection, event history, security headers, top-level delivery, WebMCP discovery, and the uniform result contract.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 

@@ -28,3 +28,17 @@ test("changing modes preserves completed work", async ({ page }) => {
   await expect(page.getByText("Aug 31, 2026")).toBeVisible();
   await expect(page.getByText("Do it for me", { exact: true })).toBeVisible();
 });
+
+test("the human can pause and resume without losing verified work", async ({ page }) => {
+  await page.goto("/demo");
+  await page.getByRole("button", { name: "Start shared journey" }).click();
+  await page.getByRole("button", { name: "Pause journey" }).click();
+
+  await expect(page.getByText("JOURNEY PAUSED")).toBeVisible();
+  await expect(page.getByText("Work is safely held")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Resume journey" })).toHaveCount(2);
+
+  await page.getByRole("button", { name: "Resume journey" }).last().click();
+  await expect(page.getByText("STEP 01 / 06")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Pause journey" })).toBeVisible();
+});

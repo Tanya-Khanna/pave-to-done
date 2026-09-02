@@ -299,13 +299,32 @@ function DemoExperience() {
               </span>
               <b>Journey</b>
             </div>
-            <button
-              className="icon-button"
-              onClick={speak}
-              aria-label="Read current guidance aloud"
-            >
-              {speaking ? <Pause size={15} /> : <Volume2 size={15} />}
-            </button>
+            <div className="dock-actions">
+              {snapshot.source &&
+                ["active", "awaiting_user", "paused"].includes(snapshot.status) && (
+                  <button
+                    className={`icon-button ${snapshot.status === "paused" ? "active" : ""}`}
+                    onClick={() =>
+                      void run("set_journey_paused_ui", {
+                        type: "SetJourneyPaused",
+                        paused: snapshot.status !== "paused",
+                      })
+                    }
+                    aria-label={snapshot.status === "paused" ? "Resume journey" : "Pause journey"}
+                    aria-pressed={snapshot.status === "paused"}
+                    title={snapshot.status === "paused" ? "Resume journey" : "Pause journey"}
+                  >
+                    {snapshot.status === "paused" ? <Play size={15} /> : <Pause size={15} />}
+                  </button>
+                )}
+              <button
+                className="icon-button"
+                onClick={speak}
+                aria-label="Read current guidance aloud"
+              >
+                {speaking ? <Pause size={15} /> : <Volume2 size={15} />}
+              </button>
+            </div>
           </div>
 
           <AgencySelector
@@ -534,6 +553,28 @@ function JourneyControl({
     return <RepairBoundary snapshot={snapshot} run={run} />;
   if (snapshot.status === "awaiting_confirmation" && snapshot.pendingConfirmation)
     return <Confirmation snapshot={snapshot} run={run} />;
+  if (snapshot.status === "paused")
+    return (
+      <div className="paused-card" role="status">
+        <div>
+          <Pause size={18} />
+        </div>
+        <span>JOURNEY PAUSED</span>
+        <h2>Work is safely held</h2>
+        <p>
+          Agent mutations are unavailable. Resume from the play control above to continue at the
+          same step with the same verified draft.
+        </p>
+        <button
+          className="button primary full"
+          onClick={() =>
+            void run("set_journey_paused_ui", { type: "SetJourneyPaused", paused: false })
+          }
+        >
+          <Play size={15} /> Resume journey
+        </button>
+      </div>
+    );
   if (!current) return <div className="empty-control">No current step.</div>;
   const index = snapshot.steps.findIndex((step) => step.id === current.id);
   return (

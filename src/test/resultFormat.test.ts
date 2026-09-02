@@ -105,4 +105,21 @@ describe("bounded WebMCP results", () => {
       },
     });
   });
+
+  it("identifies a paused journey as an explicit human control boundary", () => {
+    const snapshot = {
+      ...createInitialSnapshot("session-paused"),
+      status: "paused" as const,
+      pausedFrom: "active" as const,
+      source: { kind: "on-demand" as const, goal: "Submit an expense" },
+      steps: [currentStep],
+    };
+    expect(readResult("Paused.", snapshot).structuredContent).toMatchObject({
+      needsHuman: true,
+      next: {
+        actor: "human",
+        action: "resume_journey_in_ui",
+      },
+    });
+  });
 });

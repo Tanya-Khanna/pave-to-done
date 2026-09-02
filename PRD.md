@@ -351,7 +351,7 @@ Each command has a cryptographically random operation ID. Repeating the ID retur
 | `get_journey`                | Read                      | Return current steps, verified progress, actor, and blocking state.                                 |
 | `get_recording_trace`        | Read, untrusted           | Return redacted semantic events and expert narration for guide drafting.                            |
 | `create_journey`             | Reversible                | Validate and display an on-demand plan referencing registered capabilities.                         |
-| `set_agency_mode`            | Reversible                | Request a mode change; the app applies it at a safe boundary and updates the control baton.         |
+| `set_agency_mode`            | Reversible                | Request a mode change; authority reductions apply at a safe boundary, while expansions require the visible human UI. |
 | `show_guidance`              | Reversible UI             | Resolve a valid capability to its current anchor and render the accessible guide treatment.         |
 | `create_expense_draft`       | Reversible                | Create a real visible draft if policy and mode allow the agent to do so.                            |
 | `update_expense_draft`       | Reversible                | Update allowlisted draft fields and show the result in the portal.                                  |

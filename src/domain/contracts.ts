@@ -24,6 +24,7 @@ export const journeyCommandSchema = z.discriminatedUnion("type", [
     })
     .strict(),
   z.object({ type: z.literal("ChangeAgencyMode"), mode: agencyMode }).strict(),
+  z.object({ type: z.literal("SetJourneyPaused"), paused: z.boolean() }).strict(),
   z.object({ type: z.literal("ShowGuidance") }).strict(),
   z
     .object({
