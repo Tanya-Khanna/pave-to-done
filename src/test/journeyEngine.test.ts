@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { decide } from "../domain/decide";
 import { createInitialSnapshot } from "../domain/initialState";
 import { apply } from "./helpers";
@@ -82,5 +82,75 @@ describe("journey engine", () => {
       sentAt: new Date().toISOString(),
     });
     expect(result).toMatchObject({ ok: false, error: { code: "STALE_REVISION", retryable: true } });
+  });
+
+  it("rejects expired and replayed confirmation challenges without changing accepted state", async () => {
+    vi.useFakeTimers();
+    const preparedAt = new Date("2026-09-02T12:00:00.000Z");
+    vi.setSystemTime(preparedAt);
+    try {
+      let state = createInitialSnapshot("confirmation-session");
+      state = (
+        await apply(state, {
+          type: "StartJourney",
+          source: { kind: "on-demand", goal: "Submit the client dinner" },
+          mode: "for",
+        })
+      ).snapshot;
+      state = (
+        await apply(state, { type: "CreateExpenseDraft", date: "2026-08-31", amount: 86 }, agent)
+      ).snapshot;
+      state = (
+        await apply(
+          state,
+          { type: "UpdateExpenseDraft", field: "project", value: "Project Atlas" },
+          agent,
+        )
+      ).snapshot;
+      state = (
+        await apply(
+          state,
+          { type: "UpdateExpenseDraft", field: "category", value: "Client meal" },
+          agent,
+        )
+      ).snapshot;
+      state = (await apply(state, { type: "PrepareExpenseSubmission" }, agent)).snapshot;
+      const challenge = state.pendingConfirmation!.challenge;
+      const beforeExpiry = structuredClone(state);
+
+      vi.setSystemTime(new Date(preparedAt.getTime() + 6 * 60_000));
+      expect(
+        decide(state, {
+          operationId: crypto.randomUUID(),
+          expectedRevision: state.revision,
+          actor: human,
+          command: { type: "ConfirmExpenseSubmission", challenge, userActivated: true },
+          sentAt: new Date().toISOString(),
+        }),
+      ).toMatchObject({ ok: false, error: { code: "PRECONDITION_FAILED" } });
+      expect(state).toEqual(beforeExpiry);
+
+      vi.setSystemTime(preparedAt);
+      state = (
+        await apply(
+          state,
+          { type: "ConfirmExpenseSubmission", challenge, userActivated: true },
+          human,
+        )
+      ).snapshot;
+      const submitted = structuredClone(state);
+      expect(
+        decide(state, {
+          operationId: crypto.randomUUID(),
+          expectedRevision: state.revision,
+          actor: human,
+          command: { type: "ConfirmExpenseSubmission", challenge, userActivated: true },
+          sentAt: new Date().toISOString(),
+        }),
+      ).toMatchObject({ ok: false, error: { code: "PRECONDITION_FAILED" } });
+      expect(state).toEqual(submitted);
+    } finally {
+      vi.useRealTimers();
+    }
   });
 });

@@ -30,9 +30,49 @@ describe("event replay properties", () => {
             state = changed.snapshot;
             allEvents.push(...changed.events);
           }
+          expect(allEvents.map((event) => event.revision)).toEqual(
+            Array.from({ length: allEvents.length }, (_, index) => index + 1),
+          );
           const rebuilt = await replay(state.sessionId, allEvents);
           expect(rebuilt).toEqual(state);
           expect(rebuilt.historyVerified).toBe(true);
+        },
+      ),
+    );
+  });
+
+  it("preserves completed facts through arbitrary mode changes", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.array(fc.constantFrom("show", "with", "for"), { minLength: 1, maxLength: 20 }),
+        async (modes) => {
+          let state = createInitialSnapshot("fact-persistence-session");
+          state = (
+            await apply(
+              state,
+              {
+                type: "StartJourney",
+                source: { kind: "on-demand", goal: "Submit an expense safely" },
+                mode: "show",
+              },
+              human,
+            )
+          ).snapshot;
+          state = (
+            await apply(
+              state,
+              { type: "UpdateExpenseDraft", field: "date", value: "2026-08-31" },
+              human,
+            )
+          ).snapshot;
+
+          for (const mode of modes) {
+            state = (await apply(state, { type: "ChangeAgencyMode", mode }, human)).snapshot;
+            expect(state.expense.date).toBe("2026-08-31");
+            expect(state.steps.find((step) => step.capabilityId === "expense.date")?.status).toBe(
+              "complete",
+            );
+          }
         },
       ),
     );

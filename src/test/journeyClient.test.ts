@@ -7,6 +7,36 @@ beforeEach(() => localStorage.clear());
 afterEach(() => vi.restoreAllMocks());
 
 describe("journey client protocol", () => {
+  it("creates no committed operation when cancellation wins before the request is sent", async () => {
+    const controller = new AbortController();
+    controller.abort();
+    const snapshot = createInitialSnapshot("f332f28d-a3aa-4d32-8fd2-d5bb19f86f74");
+    const operationId = "83714486-5c48-457f-b870-3a755d81e9b1";
+    const fetchMock = vi.spyOn(globalThis, "fetch").mockImplementation(async (input, init) => {
+      if (String(input).includes("/commands")) {
+        expect(init?.signal).toBe(controller.signal);
+        throw new DOMException("Aborted", "AbortError");
+      }
+      return new Response(JSON.stringify({ ok: false, error: { code: "NOT_FOUND" } }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    });
+
+    await expect(
+      sendCommand({
+        sessionId: snapshot.sessionId,
+        revision: 0,
+        actor: { kind: "agent", surface: "webmcp" },
+        command: { type: "ShowGuidance" },
+        signal: controller.signal,
+        operationId,
+      }),
+    ).rejects.toMatchObject({ code: "AMBIGUOUS_OUTCOME", operationId });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(fetchMock.mock.calls[1][0]).toContain(`/operations/${operationId}`);
+  });
+
   it("passes cancellation to fetch and reconciles from authoritative operation state", async () => {
     const controller = new AbortController();
     controller.abort();
