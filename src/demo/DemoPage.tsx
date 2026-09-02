@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   Activity,
+  AudioLines,
   ArrowLeft,
   ArrowRight,
   Bot,
@@ -25,6 +26,7 @@ import {
   Sparkles,
   UserRound,
   Volume2,
+  VolumeX,
   WandSparkles,
 } from "lucide-react";
 import { navigate } from "../app/App";
@@ -43,6 +45,7 @@ import {
 import type { Actor, AgencyMode, DomainEvent, JourneySnapshot } from "../domain/types";
 import { AnchorRegistryProvider, useAnchorRef } from "../guidance/AnchorRegistry";
 import { GuidanceOverlay } from "../guidance/GuidanceOverlay";
+import { buildSpokenStatus, speechActionLabel } from "../shared/speechOutput";
 import { useWebMCPTools } from "../webmcp/useWebMCPTools";
 
 const human: Actor = { kind: "human", surface: "ui" };
@@ -50,6 +53,13 @@ const modeCopy = DEMO_AGENCY_POLICIES;
 
 function shortOperation(value?: string) {
   return value ? `${value.slice(0, 8)}…` : "—";
+}
+
+function speechOutputAvailable() {
+  return (
+    typeof window.speechSynthesis !== "undefined" &&
+    typeof window.SpeechSynthesisUtterance !== "undefined"
+  );
 }
 
 export function DemoPage() {
@@ -68,6 +78,7 @@ function DemoExperience() {
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
+  const [speechMuted, setSpeechMuted] = useState(false);
   const webmcp = useWebMCPTools({
     snapshot: session.snapshot,
     snapshotRef: session.snapshotRef,
@@ -80,6 +91,13 @@ function DemoExperience() {
     const timer = window.setTimeout(() => setNotice(null), 4200);
     return () => window.clearTimeout(timer);
   }, [notice]);
+
+  useEffect(
+    () => () => {
+      if (speechOutputAvailable()) window.speechSynthesis.cancel();
+    },
+    [],
+  );
 
   if (session.loading)
     return (
@@ -137,22 +155,36 @@ function DemoExperience() {
       void run("change_agency_mode_ui", { type: "ChangeAgencyMode", mode: next });
   };
 
+  const spokenText = buildSpokenStatus(snapshot);
+  const spokenActionLabel = speechActionLabel(snapshot);
+  const speechAvailable = speechOutputAvailable();
+
   const speak = () => {
-    const text =
-      snapshot.lastGuidance?.message ??
-      current?.description ??
-      "Start a journey to receive guidance.";
-    if (!("speechSynthesis" in window)) {
+    if (speechMuted) {
+      setNotice("Voice is muted. Unmute voice to hear this message.");
+      return;
+    }
+    if (!speechOutputAvailable()) {
       setNotice("Speech output is unavailable in this browser.");
       return;
     }
     window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+    const utterance = new SpeechSynthesisUtterance(spokenText);
     utterance.rate = 0.94;
     utterance.onstart = () => setSpeaking(true);
     utterance.onend = () => setSpeaking(false);
     utterance.onerror = () => setSpeaking(false);
     window.speechSynthesis.speak(utterance);
+  };
+
+  const toggleSpeechMuted = () => {
+    setSpeechMuted((muted) => {
+      const next = !muted;
+      if (next && speechOutputAvailable()) window.speechSynthesis.cancel();
+      if (next) setSpeaking(false);
+      setNotice(next ? "Voice muted. All guidance remains visible." : "Voice unmuted.");
+      return next;
+    });
   };
 
   return (
@@ -353,11 +385,42 @@ function DemoExperience() {
               <button
                 className="icon-button"
                 onClick={speak}
-                aria-label="Read current guidance aloud"
+                aria-label={spokenActionLabel}
+                title={spokenActionLabel}
               >
-                {speaking ? <Pause size={15} /> : <Volume2 size={15} />}
+                {speaking ? <Pause size={15} /> : <AudioLines size={15} />}
+              </button>
+              <button
+                className={`icon-button ${speechMuted ? "active" : ""}`}
+                onClick={toggleSpeechMuted}
+                aria-label={speechMuted ? "Unmute voice" : "Mute voice"}
+                aria-pressed={speechMuted}
+                title={speechMuted ? "Unmute voice" : "Mute voice"}
+              >
+                {speechMuted ? <VolumeX size={15} /> : <Volume2 size={15} />}
               </button>
             </div>
+          </div>
+
+          <div className="speech-status" role="status" aria-live="polite">
+            <span>
+              {!speechAvailable
+                ? "Voice unavailable"
+                : speechMuted
+                  ? "Voice muted"
+                  : speaking
+                    ? "Speaking"
+                    : "Voice ready"}
+            </span>
+            <p>
+              {speaking
+                ? spokenText
+                : speechMuted
+                  ? "Spoken guidance is off. Every instruction remains visible."
+                  : speechAvailable
+                    ? "Instructions, warnings, and approval facts can be read aloud."
+                    : "Use the same visible guidance and keyboard controls."}
+            </p>
           </div>
 
           <AgencySelector
@@ -920,6 +983,7 @@ function RepairBoundary({
   snapshot: JourneySnapshot;
   run: (name: string, command: any) => Promise<any>;
 }) {
+  const assessment = snapshot.healingAssessment;
   if (!snapshot.pendingRepair)
     return (
       <div className="repair-card waiting">
@@ -928,22 +992,28 @@ function RepairBoundary({
           <span>PORTAL CHANGE DETECTED</span>
         </div>
         <h2>The path needs one decision.</h2>
-        <div className="repair-row safe">
-          <Check size={15} />
-          <div>
-            <b>Safe remap found</b>
-            <small>expense.create moved from sidebar to header.</small>
+        {assessment?.safeRemaps.map((change) => (
+          <div className="repair-row safe" key={`${change.capabilityId}-${change.from}`}>
+            <Check size={15} />
+            <div>
+              <b>Safe remap · {change.capabilityId}</b>
+              <small>
+                {change.from} → {change.to}
+              </small>
+            </div>
+            <span>AUTO</span>
           </div>
-          <span>AUTO</span>
-        </div>
-        <div className="repair-row material">
-          <CircleAlert size={15} />
-          <div>
-            <b>New required input</b>
-            <small>Business purpose changes the workflow.</small>
+        ))}
+        {assessment?.materialChanges.map((change) => (
+          <div className="repair-row material" key={change.capabilityId}>
+            <CircleAlert size={15} />
+            <div>
+              <b>New required input · {change.requiredField}</b>
+              <small>{change.reason}</small>
+            </div>
+            <span>REVIEW</span>
           </div>
-          <span>REVIEW</span>
-        </div>
+        ))}
         <p className="agent-instruction">
           Ask the connected agent to call <code>propose_journey_repair</code>. Completed work is
           locked while it reasons.

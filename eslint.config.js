@@ -4,7 +4,16 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".wrangler", "coverage", "architecture.html"] },
+  {
+    ignores: [
+      "dist",
+      ".wrangler",
+      "coverage",
+      "playwright-report",
+      "test-results",
+      "architecture.html",
+    ],
+  },
   js.configs.recommended,
   ...tseslint.configs.recommended,
   {

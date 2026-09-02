@@ -1132,6 +1132,30 @@ summary:focus-visible {
   background: rgba(255, 112, 95, 0.08);
   border-radius: 7px;
 }
+.speech-status {
+  padding: 8px 14px 9px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.018);
+}
+.speech-status span {
+  display: block;
+  margin-bottom: 3px;
+  color: var(--mint);
+  font-size: 7px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.speech-status p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: #aeb8b3;
+  font-size: 8px;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 .agency-selector {
   padding: 12px;
   display: grid;

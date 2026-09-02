@@ -57,8 +57,11 @@ test("the on-demand mileage plan self-heals through a material V2 change", async
   await startMileage(page, "Do it for me");
   await fillMileage(page);
   await page.getByRole("button", { name: "Simulate Portal v2" }).click();
-  await expect(page.getByText("PORTAL CHANGE DETECTED")).toBeVisible();
+  await expect(page.getByText("PORTAL CHANGE DETECTED", { exact: true })).toBeVisible();
   await expect(page.getByText("18 miles", { exact: true })).toBeVisible();
+  await expect(page.getByText("Safe remap · mileage.distance")).toBeVisible();
+  await expect(page.getByText("New required input · vehicleType")).toBeVisible();
+  await expect(page.getByText(/expense\.create|Business purpose changes/)).toHaveCount(0);
 
   const proposed = await agentCommand(page, {
     type: "ProposeRepair",
