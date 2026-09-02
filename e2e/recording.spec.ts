@@ -64,6 +64,7 @@ test("an expert records semantic actions and a person publishes the reviewed gui
 test("a person can build and review a deterministic draft without an agent", async ({ page }) => {
   await page.goto("/demo");
   await page.getByRole("button", { name: "Record", exact: true }).click();
+  await expect(page.getByText(/0 semantic actions · recording/)).toBeVisible();
   await page.getByRole("button", { name: "Start shared journey" }).click();
   await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
   await expect(page.getByText(/1 semantic actions · recording/)).toBeVisible();

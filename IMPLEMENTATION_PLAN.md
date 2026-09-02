@@ -256,13 +256,13 @@ Start testing with this prompt:
 **Outcome:** “teach once” and “no recording required” are both real.
 
 1. ~~Start/stop recording only through deliberate UI controls.~~ ✅
-2. Capture safe semantic command events, target capabilities, before/after state, and narration.
+2. ~~Capture safe semantic command events, target capabilities, before/after state, and narration.~~ ✅
 3. ~~Redact receipt notes and field values not needed to define the journey.~~ ✅
 4. ~~Implement `get_recording_trace` with `untrustedContentHint`.~~ ✅
 5. ~~Implement `save_guide_draft`; keep publication human-only.~~ ✅
-6. Implement a deterministic ordered-event draft when an agent is unavailable; the trace and draft remain server-backed.
+6. ~~Implement a deterministic ordered-event draft when an agent is unavailable; the trace and draft remain server-backed.~~ ✅
 7. Validate `create_journey` against live capability IDs for an on-demand mileage task.
-8. Label recorded, draft, and session-only sources precisely.
+8. ~~Label recorded, draft, and session-only sources precisely.~~ ✅
 
 **Gate 6:** an expert can record a short flow, an agent can turn it into a visible draft, a person can publish it, and a different task can start without a guide.
 

@@ -14,7 +14,7 @@
 
 ## Current progress
 
-**Active step:** Step 8 — Teach once and recording (with Chrome verification pending in Step 1 and mileage bounds deferred from Step 4 to Step 9)
+**Active step:** Step 9 — No-recording and mileage workflow (with Chrome verification pending in Step 1)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
@@ -22,8 +22,9 @@
 **Completed in Step 5:** 12 of 12 items
 **Completed in Step 6:** 8 of 8 items
 **Completed in Step 7:** 16 of 16 items
+**Completed in Step 8:** 10 of 10 items
 
-**Current deployment:** Cloudflare version `aeb8eab9-94cc-4ce5-96da-50d006facd55` from verified GitHub commit `5b165f2` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33598613004`, the live protocol verifier, all 59 local unit/integration tests, and all 13 deployed browser tests passed.
+**Current deployment:** Cloudflare version `d332463e-617f-45a5-bfe9-4d545a70c596` from verified GitHub commit `864a428` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33600122831`, the live protocol verifier, all 65 local unit/integration tests, and all 14 deployed browser tests passed.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -122,16 +123,16 @@
 
 ## 8. Teach once and recording
 
-- [ ] Capture before-state and after-state for every recorded action.
-- [ ] Attach optional narration to recording entries.
-- [ ] Build deterministic server-backed guide drafting from ordered recording events when no agent is available.
-- [ ] Make the resulting draft visible for human review.
-- [ ] Ensure only registered capabilities can appear in a draft.
-- [ ] Verify recording begins only after explicit human activation.
-- [ ] Verify sensitive values are redacted at capture time.
-- [ ] Verify an agent cannot publish a guide.
-- [ ] Complete the human publish flow with clear recorded/draft provenance.
-- [ ] Use the exact source labels `Recorded guide`, `AI-generated draft`, and `Planned for this session`.
+- [x] Capture before-state and after-state for every recorded action. — Evidence: `recordingEntry` records bounded semantic observations before and after each accepted expense action; the full recording test verifies all six entries have both observations.
+- [x] Attach optional narration to recording entries. — Evidence: human-only `UpdateRecordingNarration` targets a numbered entry, the review UI offers a bounded narration field per action, and unit/browser tests prove the text persists and enters the draft description.
+- [x] Build deterministic server-backed guide drafting from ordered recording events when no agent is available. — Evidence: `compileRecordingGuide` deterministically deduplicates the ordered trace against the live manifest; `GenerateGuideDraft` persists the result through the event-sourced server, and the deployed fallback browser journey passes without an agent command.
+- [x] Make the resulting draft visible for human review. — Evidence: the dock renders the draft title, generation origin, provenance, and ordered title/description list before the Publish button; both live drafting paths assert the review surface.
+- [x] Ensure only registered capabilities can appear in a draft. — Evidence: the compiler rejects missing, reordered, or unregistered capabilities against the live manifest and recorded path; a server decision test submits `admin.deleteEverything` and proves the draft remains in review.
+- [x] Verify recording begins only after explicit human activation. — Evidence: the domain test denies agent/WebMCP activation without changing state, while both browser journeys begin from the visible Record control.
+- [x] Verify sensitive values are redacted at capture time. — Evidence: capture emits only field names, redaction markers, and boolean/status observations; the test proves raw date, project, category, merchant, expense ID, and receipt values do not occur in the stored trace.
+- [x] Verify an agent cannot publish a guide. — Evidence: the server rejects agent `PublishGuide` with `POLICY_DENIED`, publication has no WebMCP tool, and the successful path uses the visible human Publish control.
+- [x] Complete the human publish flow with clear recorded/draft provenance. — Evidence: an agent-created draft persists as `AI-generated draft`; human publication creates an immutable `Recorded guide` artifact that appears through `list_guides`; the deployed end-to-end test covers the transition.
+- [x] Use the exact source labels `Recorded guide`, `AI-generated draft`, and `Planned for this session`. — Evidence: the source selector, active journey label, recording review, persisted `Guide.provenance`, and on-demand card render those exact strings; tests assert the first two and the type system constrains all three.
 
 ## 9. No-recording and mileage workflow
 
