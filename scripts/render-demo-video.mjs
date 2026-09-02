@@ -114,10 +114,13 @@ const captures = (await readdir(captureDir)).filter((file) => file.endsWith(".we
 if (captures.length !== 1) {
   throw new Error("Run `CAPTURE_BASE_URL=<deployment> npm run capture:demo` before rendering.");
 }
+const capturePath = path.join(captureDir, captures[0]);
+const coverPath = path.join(renderDir, "deployed-landing.jpg");
+run("ffmpeg", ["-y", "-ss", "1", "-i", capturePath, "-frames:v", "1", "-q:v", "2", coverPath]);
 
 const scenes = [
-  { file: path.join(root, "docs/assets/landing-live.png"), duration: 16, kind: "image" },
-  { file: path.join(captureDir, captures[0]), start: 6, duration: 21, kind: "video" },
+  { file: coverPath, duration: 16, kind: "image" },
+  { file: capturePath, start: 6, duration: 21, kind: "video" },
   ...(await readdir(path.join(root, "docs/assets/webmcp-capture")))
     .filter((file) => file.endsWith(".jpg"))
     .sort()
@@ -143,7 +146,7 @@ const scenes = [
       kind: "image",
     })),
   { file: path.join(root, "docs/assets/architecture-preview.png"), duration: 12, kind: "image" },
-  { file: path.join(root, "docs/assets/landing-live.png"), duration: 20, kind: "image" },
+  { file: coverPath, duration: 20, kind: "image" },
 ];
 
 const videoEntries = [];

@@ -175,7 +175,7 @@ Production pushes use [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). 
 
 The automatic GitHub release gate runs formatting, ESLint, TypeScript, the deterministic domain/property/prompt-eval suite, and a production Worker build before a main-branch commit can enter the production deployment job. The checked-in Playwright suite separately covers 32 browser scenarios against the built Worker or a supplied live URL. `verify:live` checks the deployed health route, security headers, Durable Object state, exactly-once retry behavior, stale-revision rejection, and the persisted event chain.
 
-The current submission build has passed all three layers. It also has direct in-app-browser evidence of live WebMCP discovery, no sensitive finalization tool, progress-preserving repair, keyboard and reduced-motion behavior, responsive layouts, and clean guest reset. The remaining submission operation is recording and publishing the narrated YouTube demo from the frozen build.
+The current submission build has passed all three layers. It also has direct in-app-browser evidence of live WebMCP discovery, no sensitive finalization tool, progress-preserving repair, keyboard and reduced-motion behavior, responsive layouts, and clean guest reset. A validated 2:21 narrated cut, exact captions, and reproducible renderer are ready in [`docs/video`](./docs/video/README.md); the remaining media operation is reviewing that cut and publishing it to YouTube from the frozen build.
 
 ## Project documents
 
@@ -186,6 +186,7 @@ The current submission build has passed all three layers. It also has direct in-
 | [`IMPLEMENTATION_PLAN.md`](./IMPLEMENTATION_PLAN.md)   | Repository shape, dependency-ordered build plan, schedule, and cut rules            |
 | [`RESOURCE_AUDIT.md`](./RESOURCE_AUDIT.md)             | Official hackathon and WebMCP source audit                                          |
 | [`SUBMISSION_CHECKLIST.md`](./SUBMISSION_CHECKLIST.md) | Stage One gate, artifacts, video script, rubric proof, and freeze policy            |
+| [`docs/video/README.md`](./docs/video/README.md)       | Reproducible 2:21 video package, narration, captions, and upload checks             |
 | [`architecture.html`](./architecture.html)             | Interactive architecture walkthrough                                                |
 | [`architecture.md`](./architecture.md)                 | Accessible architecture companion                                                   |
 
