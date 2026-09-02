@@ -1,4 +1,5 @@
 import { compileSteps, buildRepair } from "./compiler";
+import { DEFAULT_RECORDED_GUIDE } from "./fixtures";
 import { actorMayExecute } from "./policies";
 import type { CommandEnvelope, Decision, DomainError, JourneySnapshot, JourneyStep } from "./types";
 
@@ -73,9 +74,7 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
         return fail("PRECONDITION_FAILED", "Reset or finish the current journey first.");
       const mode = command.mode ?? snapshot.agencyMode;
       const goal =
-        command.source.kind === "on-demand"
-          ? command.source.goal
-          : "Submit the $86 client dinner to Project Atlas";
+        command.source.kind === "on-demand" ? command.source.goal : DEFAULT_RECORDED_GUIDE.goal;
       return {
         ok: true,
         events: [

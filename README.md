@@ -142,6 +142,7 @@ The app is a React/Vite frontend and Cloudflare Worker backed by one Durable Obj
 npm ci
 npm run dev
 npm run lint
+npm run types:worker:check
 npm run typecheck
 npm test
 npm run test:e2e

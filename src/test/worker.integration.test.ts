@@ -23,6 +23,7 @@ describe("Worker entrypoint integration", () => {
     expect(response.headers.get("content-security-policy")).toContain("frame-ancestors 'none'");
     expect(response.headers.get("permissions-policy")).toContain("tools=(self)");
     expect(response.headers.get("origin-agent-cluster")).toBe("?1");
+    expect(response.headers.get("x-request-id")).toMatch(/^[a-f0-9-]{36}$/);
   });
 
   it("applies the same security boundary to static application responses", async () => {

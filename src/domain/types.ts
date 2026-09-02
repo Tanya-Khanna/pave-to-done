@@ -43,7 +43,26 @@ export interface JourneyStep {
   requiredField?: keyof ExpenseProjection;
 }
 
-export interface RepairProposal {
+export interface GuideStep {
+  capabilityId: string;
+  title: string;
+  description: string;
+}
+
+export type GuideProvenance = "Recorded guide" | "AI-generated draft" | "Planned for this session";
+
+export interface Guide {
+  id: string;
+  version: number;
+  title: string;
+  goal: string;
+  manifestVersion: string;
+  provenance: GuideProvenance;
+  status: "draft" | "published";
+  steps: GuideStep[];
+}
+
+export interface Repair {
   id: string;
   fromManifest: string;
   toManifest: string;
@@ -52,6 +71,8 @@ export interface RepairProposal {
   proposedSteps: JourneyStep[];
   status: "proposed" | "approved";
 }
+
+export type RepairProposal = Repair;
 
 export interface ConfirmationSummary {
   challenge: string;
@@ -68,15 +89,53 @@ export interface RecordingEntry {
   actor: ActorKind;
   risk: CapabilityRisk;
   redactedInput: Record<string, unknown>;
+  before?: Partial<ExpenseProjection>;
+  after?: Partial<ExpenseProjection>;
+  narration?: string;
 }
 
-export interface RecordingProjection {
+export interface RecordingTrace {
   status: "recording" | "review" | "draft" | "published";
   startedAt: string;
   narration: string;
   entries: RecordingEntry[];
   draftTitle?: string;
   guideId?: string;
+}
+
+export type RecordingProjection = RecordingTrace;
+
+export interface AgencyPolicy {
+  mode: AgencyMode;
+  label: string;
+  shortLabel: string;
+  agentAuthority: readonly CapabilityRisk[];
+  sensitiveBoundary: "human-ui-only";
+}
+
+export interface CapabilityDefinition {
+  id: string;
+  version: string;
+  title: string;
+  description: string;
+  risk: CapabilityRisk;
+  allowedActors: readonly ActorKind[];
+  requiredField?: keyof ExpenseProjection;
+  anchorKey?: string;
+  aliases?: string[];
+}
+
+export interface CapabilityManifest {
+  version: string;
+  portalVersion: PortalVersion;
+  capabilities: CapabilityDefinition[];
+}
+
+export interface PortalManifest {
+  version: PortalVersion;
+  capabilityManifestVersion: string;
+  displayName: string;
+  capabilities: CapabilityManifest;
 }
 
 export interface JourneySourceRecorded {
@@ -103,7 +162,7 @@ export interface JourneySnapshot {
   status: JourneyStatus;
   steps: JourneyStep[];
   expense: ExpenseProjection;
-  pendingRepair?: RepairProposal;
+  pendingRepair?: Repair;
   pendingConfirmation?: ConfirmationSummary;
   recording?: RecordingProjection;
   lastGuidance?: { stepId: string; message: string; anchorKey?: string };
@@ -155,6 +214,8 @@ export interface DomainEvent extends DomainEventDraft {
   occurredAt: string;
 }
 
+export type EventRecord = DomainEvent;
+
 export type DomainErrorCode =
   | "INVALID_INPUT"
   | "STALE_REVISION"
@@ -183,6 +244,8 @@ export interface CommandSuccess {
   deduplicated: boolean;
   snapshot: JourneySnapshot;
   events: DomainEvent[];
+  sentRevision?: number;
+  reconciled?: boolean;
 }
 
 export interface CommandFailure {
@@ -191,6 +254,8 @@ export interface CommandFailure {
   revision: number;
   error: DomainError;
   snapshot: JourneySnapshot;
+  sentRevision?: number;
+  reconciled?: boolean;
 }
 
 export type CommandResult = CommandSuccess | CommandFailure;

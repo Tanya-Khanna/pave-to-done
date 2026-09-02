@@ -1,4 +1,5 @@
 import type { JourneySnapshot } from "./types";
+import { DEMO_RECEIPT } from "./fixtures";
 
 export function createInitialSnapshot(
   sessionId: string,
@@ -15,8 +16,8 @@ export function createInitialSnapshot(
     status: "idle",
     steps: [],
     expense: {
-      receiptId: "receipt-demo-86",
-      merchant: "Juniper & Co.",
+      receiptId: DEMO_RECEIPT.id,
+      merchant: DEMO_RECEIPT.merchant,
       date: "",
       amount: null,
       project: "",

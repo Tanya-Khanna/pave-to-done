@@ -1,5 +1,47 @@
 import type { CommandResult, JourneySnapshot } from "../domain/types";
 
+export interface NextControlBoundary {
+  actor: "human" | "agent" | "none";
+  action: string;
+  reason: string;
+}
+
+export function nextControlBoundary(snapshot: JourneySnapshot): NextControlBoundary {
+  if (snapshot.status === "awaiting_confirmation")
+    return {
+      actor: "human",
+      action: "review_and_confirm_in_ui",
+      reason: "Final expense submission is sensitive and human-only.",
+    };
+  if (snapshot.status === "repair_required")
+    return snapshot.pendingRepair
+      ? {
+          actor: "human",
+          action: "review_material_repair_in_ui",
+          reason: "A material workflow change requires explicit approval.",
+        }
+      : {
+          actor: "agent",
+          action: "propose_journey_repair",
+          reason: "The portal changed and a bounded repair must be proposed.",
+        };
+  const step = snapshot.steps.find((item) => item.status === "current");
+  if (step)
+    return {
+      actor: step.assignedActor,
+      action: step.capabilityId,
+      reason: `${step.title} is the current ${step.risk} step.`,
+    };
+  return {
+    actor: "none",
+    action: snapshot.status === "completed" ? "journey_complete" : "start_journey",
+    reason:
+      snapshot.status === "completed"
+        ? "The accepted event chain reached the verified outcome."
+        : "No journey is active.",
+  };
+}
+
 function safeSummary(snapshot: JourneySnapshot) {
   const step = snapshot.steps.find((item) => item.status === "current");
   return {
@@ -36,11 +78,17 @@ export function readResult(
   return {
     content: [{ type: "text", text: summary }],
     structuredContent: {
+      ok: true,
       status: "ok",
+      operationId: null,
       revision: snapshot.revision,
+      sentRevision: null,
+      resultingRevision: snapshot.revision,
+      changed: false,
       summary,
+      next: nextControlBoundary(snapshot),
       ...safeSummary(snapshot),
-      ...extra,
+      data: extra,
     },
   };
 }
@@ -56,10 +104,22 @@ export function commandResult(summary: string, result: CommandResult) {
     return {
       content: [{ type: "text", text: `${result.error.code}: ${result.error.message}` }],
       structuredContent: {
+        ok: false,
         status,
+        operationId: result.operationId,
         revision: result.revision,
+        sentRevision: result.sentRevision ?? null,
+        resultingRevision: result.revision,
+        changed: false,
         summary: result.error.message,
-        error: { code: result.error.code, retryable: result.error.retryable },
+        next: nextControlBoundary(result.snapshot),
+        error: {
+          code: result.error.code,
+          message: result.error.message,
+          retryable: result.error.retryable,
+          currentRevision: result.snapshot.revision,
+        },
+        reconciled: result.reconciled ?? false,
         ...safeSummary(result.snapshot),
       },
     };
@@ -68,10 +128,16 @@ export function commandResult(summary: string, result: CommandResult) {
   return {
     content: [{ type: "text", text: summary }],
     structuredContent: {
+      ok: true,
       status: needsHuman ? "needs_human" : "ok",
       revision: result.revision,
+      sentRevision: result.sentRevision ?? null,
+      resultingRevision: result.revision,
+      changed: result.events.length > 0 && !result.deduplicated,
       summary,
       operationId: result.operationId,
+      next: nextControlBoundary(result.snapshot),
+      reconciled: result.reconciled ?? false,
       deduplicated: result.deduplicated,
       ...safeSummary(result.snapshot),
     },

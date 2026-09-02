@@ -29,17 +29,22 @@ import {
 } from "lucide-react";
 import { navigate } from "../app/App";
 import { useJourneySession } from "../client/useJourneySession";
+import {
+  DEFAULT_JOURNEY_GOAL,
+  DEFAULT_RECORDED_GUIDE,
+  DEMO_AGENCY_POLICIES,
+  DEMO_BUSINESS_PURPOSE,
+  DEMO_CATEGORIES,
+  DEMO_PROJECTS,
+  DEMO_RECEIPT,
+} from "../domain/fixtures";
 import type { Actor, AgencyMode, DomainEvent, JourneySnapshot } from "../domain/types";
 import { AnchorRegistryProvider, useAnchorRef } from "../guidance/AnchorRegistry";
 import { GuidanceOverlay } from "../guidance/GuidanceOverlay";
 import { useWebMCPTools } from "../webmcp/useWebMCPTools";
 
 const human: Actor = { kind: "human", surface: "ui" };
-const modeCopy: Record<AgencyMode, { label: string; short: string; color: string }> = {
-  show: { label: "Show me", short: "You act", color: "coral" },
-  with: { label: "Do it with me", short: "Take turns", color: "amber" },
-  for: { label: "Do it for me", short: "Agent acts", color: "mint" },
-};
+const modeCopy = DEMO_AGENCY_POLICIES;
 
 function shortOperation(value?: string) {
   return value ? `${value.slice(0, 8)}…` : "—";
@@ -57,7 +62,7 @@ function DemoExperience() {
   const session = useJourneySession();
   const [source, setSource] = useState<"recorded" | "on-demand">("recorded");
   const [mode, setMode] = useState<AgencyMode>("with");
-  const [goal, setGoal] = useState("Submit my $86 client dinner from yesterday to Project Atlas");
+  const [goal, setGoal] = useState(DEFAULT_JOURNEY_GOAL);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
@@ -114,7 +119,11 @@ function DemoExperience() {
       type: "StartJourney",
       source:
         source === "recorded"
-          ? { kind: "recorded", guideId: "expense-client-dinner", guideVersion: 1 }
+          ? {
+              kind: "recorded",
+              guideId: DEFAULT_RECORDED_GUIDE.id,
+              guideVersion: DEFAULT_RECORDED_GUIDE.version,
+            }
           : { kind: "on-demand", goal },
       mode,
     });
@@ -267,8 +276,11 @@ function DemoExperience() {
             </div>
             <div>
               <span>DEMO RECEIPT</span>
-              <strong>Juniper & Co.</strong>
-              <small>Aug 31 · Client dinner · $86.00</small>
+              <strong>{DEMO_RECEIPT.merchant}</strong>
+              <small>
+                {DEMO_RECEIPT.displayDate.replace(", 2026", "")} · Client dinner · $
+                {DEMO_RECEIPT.amount.toFixed(2)}
+              </small>
             </div>
             <div className="receipt-confidence">
               <span>98%</span>
@@ -384,7 +396,7 @@ function AgencySelector({
             )}
           </span>
           <b>{modeCopy[mode].label}</b>
-          <small>{modeCopy[mode].short}</small>
+          <small>{modeCopy[mode].shortLabel}</small>
         </button>
       ))}
     </div>
@@ -433,7 +445,7 @@ function JourneyStart({
             <Check size={13} />
           </span>
           <div>
-            <b>Submit a client dinner</b>
+            <b>{DEFAULT_RECORDED_GUIDE.title}</b>
             <small>6 semantic steps · reviewed</small>
           </div>
           <strong>96% match</strong>
@@ -623,27 +635,27 @@ function HumanStepAction({
   if (!step) return null;
   const actions: Record<string, { label: string; command: any }> = {
     "expense.date": {
-      label: "Use Aug 31, 2026",
-      command: { type: "UpdateExpenseDraft", field: "date", value: "2026-08-31" },
+      label: `Use ${DEMO_RECEIPT.displayDate}`,
+      command: { type: "UpdateExpenseDraft", field: "date", value: DEMO_RECEIPT.date },
     },
     "expense.amount": {
-      label: "Use $86.00",
-      command: { type: "UpdateExpenseDraft", field: "amount", value: 86 },
+      label: `Use $${DEMO_RECEIPT.amount.toFixed(2)}`,
+      command: { type: "UpdateExpenseDraft", field: "amount", value: DEMO_RECEIPT.amount },
     },
     "expense.project": {
-      label: "Choose Project Atlas",
-      command: { type: "UpdateExpenseDraft", field: "project", value: "Project Atlas" },
+      label: `Choose ${DEMO_PROJECTS[0]}`,
+      command: { type: "UpdateExpenseDraft", field: "project", value: DEMO_PROJECTS[0] },
     },
     "expense.category": {
-      label: "Choose Client meal",
-      command: { type: "UpdateExpenseDraft", field: "category", value: "Client meal" },
+      label: `Choose ${DEMO_CATEGORIES[0]}`,
+      command: { type: "UpdateExpenseDraft", field: "category", value: DEMO_CATEGORIES[0] },
     },
     "expense.businessPurpose": {
       label: "Use client workshop purpose",
       command: {
         type: "UpdateExpenseDraft",
         field: "businessPurpose",
-        value: "Client dinner after Project Atlas workshop",
+        value: DEMO_BUSINESS_PURPOSE,
       },
     },
     "expense.prepare": {
@@ -829,7 +841,7 @@ function RecordingControl({
           onClick={() =>
             void run("start_recording_ui", {
               type: "StartRecording",
-              narration: "Submit a client dinner expense.",
+              narration: DEFAULT_RECORDED_GUIDE.title,
             })
           }
         >
@@ -891,7 +903,7 @@ function ExpenseForm({ snapshot }: { snapshot: JourneySnapshot }) {
         <FieldShell
           anchor="expense.date"
           label="Expense date"
-          value={snapshot.expense.date ? "Aug 31, 2026" : ""}
+          value={snapshot.expense.date ? DEMO_RECEIPT.displayDate : ""}
           hint="Required"
           active={current === "expense.date"}
         />
@@ -966,6 +978,7 @@ function DiagnosticPanel({
     registered: string[];
     topLevel: boolean;
     originAgentCluster: boolean;
+    permissions: "tools-allowed" | "unavailable";
     error?: string;
   };
   invocation: {
@@ -974,6 +987,10 @@ function DiagnosticPanel({
     durationMs: number;
     operationId?: string;
     message?: string;
+    sentRevision?: number;
+    resultingRevision?: number;
+    reconciled?: boolean;
+    reconciledState?: { revision: number; status: JourneySnapshot["status"] };
   };
   pending: number;
   onClose(): void;
@@ -1020,6 +1037,12 @@ function DiagnosticPanel({
             {webmcp.originAgentCluster ? "isolated" : "not isolated"}
           </b>
         </article>
+        <article>
+          <span>PERMISSION</span>
+          <b className={webmcp.permissions === "tools-allowed" ? "good" : "warn"}>
+            {webmcp.permissions === "tools-allowed" ? "tools allowed" : "unavailable"}
+          </b>
+        </article>
       </div>
       <section>
         <span>REGISTERED NOW</span>
@@ -1052,6 +1075,24 @@ function DiagnosticPanel({
           <div>
             <dt>Operation</dt>
             <dd>{shortOperation(invocation.operationId)}</dd>
+          </div>
+          <div>
+            <dt>Revision sent</dt>
+            <dd>{invocation.sentRevision ?? "—"}</dd>
+          </div>
+          <div>
+            <dt>Revision returned</dt>
+            <dd>{invocation.resultingRevision ?? "—"}</dd>
+          </div>
+          <div>
+            <dt>Reconciled state</dt>
+            <dd>
+              {invocation.reconciledState
+                ? `r${invocation.reconciledState.revision} · ${invocation.reconciledState.status}`
+                : invocation.reconciled
+                  ? "verified"
+                  : "—"}
+            </dd>
           </div>
           <div>
             <dt>Pending reconciliation</dt>

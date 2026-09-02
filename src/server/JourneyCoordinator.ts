@@ -6,8 +6,8 @@ import { hashEvent } from "../domain/eventHash";
 import { createInitialSnapshot } from "../domain/initialState";
 import type { CommandEnvelope, CommandResult, DomainEvent, JourneySnapshot } from "../domain/types";
 import { errorResponse, json } from "./http";
+import { writeOperationLog } from "./logging";
 
-type Env = Record<string, never>;
 interface RateWindow {
   startedAt: number;
   count: number;
@@ -16,9 +16,10 @@ interface RateWindow {
 const STATE_KEY = "snapshot";
 const RATE_KEY = "rate-window";
 const MAX_COMMANDS_PER_MINUTE = 90;
+const MAX_ACCEPTED_EVENTS = 200;
 const RETENTION_MS = 7 * 24 * 60 * 60 * 1000;
 
-export class JourneyCoordinator extends DurableObject<Env> {
+export class JourneyCoordinator extends DurableObject<Cloudflare.Env> {
   private async snapshot(sessionId?: string): Promise<JourneySnapshot> {
     const stored = await this.ctx.storage.get<JourneySnapshot>(STATE_KEY);
     if (stored) return stored;
@@ -43,12 +44,16 @@ export class JourneyCoordinator extends DurableObject<Env> {
     return next.count <= MAX_COMMANDS_PER_MINUTE;
   }
 
-  private async execute(envelope: CommandEnvelope): Promise<CommandResult> {
+  private async execute(envelope: CommandEnvelope, requestId: string): Promise<CommandResult> {
     const existing = await this.ctx.storage.get<CommandResult>(`op:${envelope.operationId}`);
-    if (existing) return existing.ok ? { ...existing, deduplicated: true } : existing;
+    if (existing) {
+      const result = existing.ok ? { ...existing, deduplicated: true } : existing;
+      writeOperationLog(requestId, envelope, result);
+      return result;
+    }
     if (!(await this.rateAllowed())) {
       const snapshot = await this.snapshot();
-      return {
+      const result: CommandResult = {
         ok: false,
         operationId: envelope.operationId,
         revision: snapshot.revision,
@@ -59,13 +64,30 @@ export class JourneyCoordinator extends DurableObject<Env> {
         },
         snapshot,
       };
+      writeOperationLog(requestId, envelope, result);
+      return result;
     }
 
-    return this.ctx.storage.transaction(async (txn) => {
+    const result = await this.ctx.storage.transaction(async (txn) => {
       const duplicate = await txn.get<CommandResult>(`op:${envelope.operationId}`);
       if (duplicate) return duplicate.ok ? { ...duplicate, deduplicated: true } : duplicate;
       const current = await txn.get<JourneySnapshot>(STATE_KEY);
       if (!current) throw new Error("Session has not been initialized.");
+      if (current.revision >= MAX_ACCEPTED_EVENTS) {
+        const failed: CommandResult = {
+          ok: false,
+          operationId: envelope.operationId,
+          revision: current.revision,
+          error: {
+            code: "RATE_LIMITED",
+            message: "This bounded demo journey reached its accepted-event limit.",
+            retryable: false,
+          },
+          snapshot: current,
+        };
+        await txn.put(`op:${envelope.operationId}`, failed);
+        return failed;
+      }
       const decision = decide(current, envelope);
       if (!decision.ok) {
         const failed: CommandResult = {
@@ -118,6 +140,8 @@ export class JourneyCoordinator extends DurableObject<Env> {
       await txn.put(`op:${envelope.operationId}`, result);
       return result;
     });
+    writeOperationLog(requestId, envelope, result);
+    return result;
   }
 
   async fetch(request: Request): Promise<Response> {
@@ -166,7 +190,8 @@ export class JourneyCoordinator extends DurableObject<Env> {
           "INVALID_INPUT",
           result.error.issues[0]?.message ?? "Invalid command.",
         );
-      const commandResult = await this.execute(result.data as CommandEnvelope);
+      const requestId = request.headers.get("x-pave-request-id") ?? crypto.randomUUID();
+      const commandResult = await this.execute(result.data as CommandEnvelope, requestId);
       return json(commandResult, {
         status: commandResult.ok ? 200 : commandResult.error.code === "STALE_REVISION" ? 409 : 422,
       });

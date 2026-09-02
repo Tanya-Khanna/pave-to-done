@@ -1,22 +1,4 @@
-import type { ActorKind, CapabilityRisk, ExpenseProjection, PortalVersion } from "./types";
-
-export interface CapabilityDefinition {
-  id: string;
-  version: string;
-  title: string;
-  description: string;
-  risk: CapabilityRisk;
-  allowedActors: readonly ActorKind[];
-  requiredField?: keyof ExpenseProjection;
-  anchorKey?: string;
-  aliases?: string[];
-}
-
-export interface CapabilityManifest {
-  version: string;
-  portalVersion: PortalVersion;
-  capabilities: CapabilityDefinition[];
-}
+import type { CapabilityDefinition, CapabilityManifest, PortalVersion } from "./types";
 
 const shared: CapabilityDefinition[] = [
   {

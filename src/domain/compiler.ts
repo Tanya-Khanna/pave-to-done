@@ -1,5 +1,6 @@
 import { getManifest } from "./manifests";
 import { assignActor } from "./policies";
+import { DEMO_BUSINESS_PURPOSE, DEMO_CATEGORIES, DEMO_PROJECTS, DEMO_RECEIPT } from "./fixtures";
 import type {
   AgencyMode,
   ExpenseProjection,
@@ -10,15 +11,25 @@ import type {
 } from "./types";
 
 const baseSteps: Array<[string, string, string, keyof ExpenseProjection]> = [
-  ["expense.date", "Add the receipt date", "Enter yesterday’s date from the demo receipt.", "date"],
-  ["expense.amount", "Add the amount", "Enter the verified $86.00 amount.", "amount"],
+  [
+    "expense.date",
+    "Add the receipt date",
+    `Enter ${DEMO_RECEIPT.displayDate} from the demo receipt.`,
+    "date",
+  ],
+  [
+    "expense.amount",
+    "Add the amount",
+    `Enter the verified $${DEMO_RECEIPT.amount.toFixed(2)} amount.`,
+    "amount",
+  ],
   [
     "expense.project",
-    "Choose Project Atlas",
+    `Choose ${DEMO_PROJECTS[0]}`,
     "This allocation needs human judgment in With Me mode.",
     "project",
   ],
-  ["expense.category", "Choose Client meal", "Classify the dinner expense.", "category"],
+  ["expense.category", `Choose ${DEMO_CATEGORIES[0]}`, "Classify the dinner expense.", "category"],
 ];
 
 export function compileSteps(mode: AgencyMode, portalVersion: PortalVersion): JourneyStep[] {
@@ -85,7 +96,7 @@ export function buildRepair(snapshot: JourneySnapshot, businessPurpose: string):
     id: "step-business-purpose",
     capabilityId: "expense.businessPurpose",
     title: "Add business purpose",
-    description: businessPurpose || "Explain why the client dinner was required.",
+    description: businessPurpose || DEMO_BUSINESS_PURPOSE,
     status: "pending",
     assignedActor: assignActor(4, "reversible", snapshot.agencyMode),
     risk: "reversible",

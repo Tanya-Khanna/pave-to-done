@@ -21,6 +21,10 @@ interface Invocation {
   durationMs: number;
   operationId?: string;
   message?: string;
+  sentRevision?: number;
+  resultingRevision?: number;
+  reconciled?: boolean;
+  reconciledState?: { revision: number; status: JourneySnapshot["status"] };
 }
 
 export function useJourneySession() {
@@ -107,7 +111,7 @@ export function useJourneySession() {
           setEvents((previous) => {
             const byId = new Map(previous.map((event) => [event.eventId, event]));
             result.events.forEach((event) => byId.set(event.eventId, event));
-            return [...byId.values()].sort((a, b) => a.revision - b.revision).slice(-50);
+            return [...byId.values()].sort((a, b) => a.revision - b.revision);
           });
         }
         setInvocation({
@@ -115,6 +119,12 @@ export function useJourneySession() {
           status: result.ok ? "ok" : "error",
           durationMs: Math.round(performance.now() - started),
           operationId: result.operationId,
+          sentRevision: result.sentRevision,
+          resultingRevision: result.revision,
+          reconciled: result.reconciled,
+          reconciledState: result.reconciled
+            ? { revision: result.snapshot.revision, status: result.snapshot.status }
+            : undefined,
           message: result.ok
             ? result.deduplicated
               ? "Deduplicated and verified"
@@ -126,11 +136,18 @@ export function useJourneySession() {
       } catch (cause) {
         const ambiguous =
           cause instanceof Error && "code" in cause && cause.code === "AMBIGUOUS_OUTCOME";
+        const reconciledState = ambiguous ? await refresh().catch(() => null) : null;
         setInvocation({
           name,
           status: ambiguous ? "reconciling" : "error",
           durationMs: Math.round(performance.now() - started),
           message: cause instanceof Error ? cause.message : "Command failed.",
+          sentRevision: current.revision,
+          resultingRevision: reconciledState?.revision,
+          reconciled: Boolean(reconciledState),
+          reconciledState: reconciledState
+            ? { revision: reconciledState.revision, status: reconciledState.status }
+            : undefined,
         });
         throw cause;
       }

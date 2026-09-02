@@ -2,10 +2,20 @@ import { describe, expect, it } from "vitest";
 import { toolInputSchemas, toolInputValidators } from "../webmcp/toolContracts";
 
 describe("generated WebMCP input schemas", () => {
+  function inspect(value: unknown, visit: (schema: Record<string, unknown>) => void) {
+    if (!value || typeof value !== "object") return;
+    const schema = value as Record<string, unknown>;
+    visit(schema);
+    Object.values(schema).forEach((child) => inspect(child, visit));
+  }
+
   it("generates closed object schemas from the same validators used at runtime", () => {
     for (const generated of Object.values(toolInputSchemas)) {
-      expect(generated.type).toBe("object");
-      expect(generated.additionalProperties).toBe(false);
+      inspect(generated, (schema) => {
+        if (schema.type === "object") expect(schema.additionalProperties).toBe(false);
+        if (typeof schema.description === "string")
+          expect(schema.description.length).toBeLessThanOrEqual(150);
+      });
     }
   });
 

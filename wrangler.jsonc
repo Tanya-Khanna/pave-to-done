@@ -13,5 +13,9 @@
     "bindings": [{ "name": "JOURNEYS", "class_name": "JourneyCoordinator" }],
   },
   "migrations": [{ "tag": "v1", "new_sqlite_classes": ["JourneyCoordinator"] }],
-  "observability": { "enabled": true },
+  "observability": {
+    "enabled": true,
+    "logs": { "enabled": true, "head_sampling_rate": 1, "invocation_logs": true },
+    "traces": { "enabled": true, "head_sampling_rate": 1 },
+  },
 }

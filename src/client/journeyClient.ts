@@ -57,12 +57,19 @@ export async function getEvents(
   afterRevision = 0,
   signal?: AbortSignal,
 ): Promise<DomainEvent[]> {
-  const response = await fetch(
-    `/api/sessions/${encodeURIComponent(sessionId)}/events?afterRevision=${afterRevision}&limit=50`,
-    { signal },
-  );
-  const data = await parse<{ ok: true; events: DomainEvent[] }>(response);
-  return data.events;
+  const events: DomainEvent[] = [];
+  let cursor = afterRevision;
+  while (events.length < 200) {
+    const response = await fetch(
+      `/api/sessions/${encodeURIComponent(sessionId)}/events?afterRevision=${cursor}&limit=50`,
+      { signal },
+    );
+    const data = await parse<{ ok: true; events: DomainEvent[] }>(response);
+    events.push(...data.events);
+    if (data.events.length < 50) break;
+    cursor = data.events[data.events.length - 1].revision;
+  }
+  return events;
 }
 
 function readPending(): PendingOperation[] {
@@ -139,11 +146,11 @@ export async function sendCommand(options: {
     );
     const result = await parse<CommandResult>(response);
     clearPending(operationId);
-    return result;
+    return { ...result, sentRevision: options.revision };
   } catch (error) {
     if (options.signal?.aborted || error instanceof TypeError) {
       const reconciled = await reconcileOperation(options.sessionId, operationId);
-      if (reconciled) return reconciled;
+      if (reconciled) return { ...reconciled, sentRevision: options.revision, reconciled: true };
       throw Object.assign(new Error("Outcome unknown—reconciling before retry."), {
         code: "AMBIGUOUS_OUTCOME",
         operationId,

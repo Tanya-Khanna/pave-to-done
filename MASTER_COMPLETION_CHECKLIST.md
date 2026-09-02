@@ -14,11 +14,13 @@
 
 ## Current progress
 
-**Active step:** Step 2 — Repository and deployment foundation (with one external-browser check still pending in Step 1)
+**Active step:** Step 4 — WebMCP contract completion (with one external-browser check still pending in Step 1)
 **Completed in Step 1:** 8 of 9 items
-**Completed in Step 2:** 2 of 3 items
+**Completed in Step 2:** 3 of 3 items
+**Completed in Step 3:** 4 of 4 items
+**Completed in Step 4:** 19 of 20 items
 
-**Current deployment:** Cloudflare version `710c2aef-a1d2-4b16-9143-686aa51b4d89` at `https://pave-to-done.north-raincoat.workers.dev`. Live verification passed health, persistence, exactly-once handling, stale-revision rejection, event history, security headers, top-level delivery, and WebMCP discovery.
+**Current deployment:** Cloudflare version `b7e4036e-3969-48d8-8174-7201135c6786` from verified GitHub commit `5c4bece` at `https://pave-to-done.north-raincoat.workers.dev`. Live verification passed health, persistence, exactly-once handling, stale-revision rejection, event history, security headers, top-level delivery, and WebMCP discovery.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -36,39 +38,39 @@
 
 ## 2. Repository and deployment foundation
 
-- [ ] Connect continuous deployment; GitHub Actions must test, build, and deploy the intended release through a documented protected path.
+- [x] Connect continuous deployment; GitHub Actions must test, build, and deploy the intended release through a documented protected path. — Evidence: GitHub `production` is restricted to `main`; account ID is a repository variable and the seven-day least-privilege token is an environment secret; run `33593442250` passed the `verify` job before `Deploy production`, then deployed commit `5c4bece` as Cloudflare version `b7e4036e-3969-48d8-8174-7201135c6786`; the post-deploy live verifier passed.
 - [x] Run the complete Gate 0 fresh-clone exercise: install, test, build, local run, documented deployment, `/health`, `/demo`, top-level Worker origin, and origin isolation. — Evidence: a public shallow clone at commit `68d42a1` completed `npm ci`, formatting, lint, type checking, all 18 tests, production build, and `wrangler deploy --dry-run`; its local Worker returned 200 for `/api/health` and `/demo` with `Origin-Agent-Cluster: ?1`, and the canonical top-level deployment had already passed the live verifier.
 - [x] Ensure a fresh contributor can deploy without relying on undocumented local state. — Evidence: the clean-clone Wrangler dry run discovered the static assets, `JOURNEYS` Durable Object binding, and checked-in SQLite migration without environment variables or local files; `README.md` now documents exact authentication, deployment, fork naming, and verification steps.
 
 ## 3. Domain model and backend foundations
 
-- [ ] Define the complete named domain models: `JourneySnapshot`, `JourneyStep`, `Guide`, `RecordingTrace`, `Repair`, `AgencyPolicy`, portal and capability manifests, command/result envelopes, and event records.
-- [ ] Move receipt, project, category, policy, recorded-guide, and related demo data into proper typed fixtures rather than UI constants.
-- [ ] Add structured server logging for request ID, operation ID, expected revision, resulting revision, accepted event, and redacted failure details.
-- [ ] Verify logs never contain receipt contents, challenges, sensitive identifiers, or raw upstream responses.
+- [x] Define the complete named domain models: `JourneySnapshot`, `JourneyStep`, `Guide`, `RecordingTrace`, `Repair`, `AgencyPolicy`, portal and capability manifests, command/result envelopes, and event records. — Evidence: `src/domain/types.ts` exports each named model; `src/domain/manifests.ts` consumes the canonical manifest types; Wrangler-generated `worker-configuration.d.ts` binds the runtime from `wrangler.jsonc`, and CI checks it for drift.
+- [x] Move receipt, project, category, policy, recorded-guide, and related demo data into proper typed fixtures rather than UI constants. — Evidence: `src/domain/fixtures.ts` is the typed source for the receipt, choices, business purpose, default goal, all three policy presentations, and the published recorded guide; the compiler, decision layer, initial state, UI, and WebMCP adapter import it.
+- [x] Add structured server logging for request ID, operation ID, expected revision, resulting revision, accepted event, and redacted failure details. — Evidence: `src/server/logging.ts` emits `pave.operation.v1` records; the Worker creates and returns a request ID, propagates it to the Durable Object, and Workers Logs plus traces are explicitly enabled in `wrangler.jsonc`.
+- [x] Verify logs never contain receipt contents, challenges, sensitive identifiers, or raw upstream responses. — Evidence: `src/test/logging.test.ts` supplies a confirmation challenge, receipt identifier, merchant, event payload, and failure message, then proves none enter serialized logs; only allowlisted lineage, event names, error code, retryability, route class, and the literal `redacted` detail marker remain.
 
 ## 4. WebMCP contract completion
 
-- [ ] Make WebMCP schemas single-source and generated.
-- [ ] Enforce `additionalProperties: false` at every object boundary.
-- [ ] Audit every tool name, description, parameter description, and annotation.
-- [ ] Keep tool descriptions below roughly 500 characters and parameter descriptions below roughly 150 characters.
+- [x] Make WebMCP schemas single-source and generated. — Evidence: `src/webmcp/toolContracts.ts` generates every JSON Schema from the same Zod validator used at execution time.
+- [x] Enforce `additionalProperties: false` at every object boundary. — Evidence: all validators are strict and `src/test/toolContracts.test.ts` plus `src/test/webmcpLifecycle.test.tsx` recursively inspect every registered object schema.
+- [x] Audit every tool name, description, parameter description, and annotation. — Evidence: the lifecycle test reaches all 13 state-dependent and route tools, asserts the exact public name set, validates closed schemas, and requires explicit read-only, destructive, idempotent, and open-world annotations.
+- [x] Keep tool descriptions below roughly 500 characters and parameter descriptions below roughly 150 characters. — Evidence: lifecycle tests enforce 500 characters for every registered tool; schema tests recursively enforce 150 characters for every generated parameter description.
 - [ ] Add appropriate numeric and string bounds, including mileage inputs.
-- [ ] Make every normal tool result include `ok`, `operationId`, `revision`, `changed`, `summary`, `next`, and useful grounded error details when rejected.
-- [ ] Explicitly identify the next human or agent control boundary in results.
-- [ ] Keep normal tool results around 1.5 KB.
-- [ ] Bound recording-trace output; do not return an unbounded complete trace.
-- [ ] Add bounded `limit` inputs or summaries wherever lists can grow.
-- [ ] Confirm every tool executes against fresh state and never trusts stale UI state.
-- [ ] Verify all sensitive tools only prepare confirmation and cannot finalize it.
-- [ ] Verify registration cleanup, route changes, unmounting, abort propagation, and duplicate protection under React Strict Mode.
-- [ ] Verify cancellation reaches `fetch`, and ambiguous cancellation reconciles from authoritative state.
-- [ ] Add top-level-page confirmation to diagnostics.
-- [ ] Add origin-isolation status to diagnostics.
-- [ ] Add permissions status to diagnostics where applicable.
-- [ ] Display the last resulting revision separately from the revision originally sent.
-- [ ] Display the reconciled state after ambiguous cancellation.
-- [ ] Display the complete accepted event chain.
+- [x] Make every normal tool result include `ok`, `operationId`, `revision`, `changed`, `summary`, `next`, and useful grounded error details when rejected. — Evidence: `src/webmcp/resultFormat.ts` owns the uniform read, success, and rejection envelopes; `src/test/resultFormat.test.ts` verifies all required fields and grounded stale-revision details.
+- [x] Explicitly identify the next human or agent control boundary in results. — Evidence: `nextControlBoundary` identifies the actor, action, and reason for active, repair, confirmation, idle, and completed states.
+- [x] Keep normal tool results around 1.5 KB. — Evidence: result-format tests enforce a 1,500-byte serialized ceiling for representative read and mutation results.
+- [x] Bound recording-trace output; do not return an unbounded complete trace. — Evidence: `get_recording_trace` returns the latest 10 redacted entries plus `totalEntries` and `truncated`.
+- [x] Add bounded `limit` inputs or summaries wherever lists can grow. — Evidence: the server caps event pages at 50, the client paginates to the session's 200-event ceiling, and recording output reports total and truncation; capabilities and published-guide lists are fixture-bounded.
+- [x] Confirm every tool executes against fresh state and never trusts stale UI state. — Evidence: all handlers read `snapshotRef.current`; the lifecycle test keeps a route tool registered, advances the snapshot to revision 3, invokes it, and observes revision 3.
+- [x] Verify all sensitive tools only prepare confirmation and cannot finalize it. — Evidence: the exhaustive registration test proves there is no confirmation, repair-approval, or guide-publication tool; `prepare_expense_submission` stops at the visible human boundary.
+- [x] Verify registration cleanup, route changes, unmounting, abort propagation, and duplicate protection under React Strict Mode. — Evidence: `src/test/webmcpLifecycle.test.tsx` runs the hook under Strict Mode, proves one active registration per name, and proves every registration signal aborts on unmount; existing server protocol tests cover duplicate operation IDs.
+- [x] Verify cancellation reaches `fetch`, and ambiguous cancellation reconciles from authoritative state. — Evidence: `src/test/journeyClient.test.ts` asserts the exact AbortSignal reaches the mutation fetch and that an aborted response resolves through the authoritative operation endpoint with `reconciled: true`.
+- [x] Add top-level-page confirmation to diagnostics. — Evidence: the diagnostic panel renders `top-level` or `embedded` from `window.self === window.top`.
+- [x] Add origin-isolation status to diagnostics. — Evidence: the panel renders `isolated` or `not isolated` from `window.originAgentCluster`.
+- [x] Add permissions status to diagnostics where applicable. — Evidence: the panel exposes effective `tools allowed` only when WebMCP exists on a top-level document, otherwise `unavailable`.
+- [x] Display the last resulting revision separately from the revision originally sent. — Evidence: invocation state and diagnostics render `Revision sent` and `Revision returned`; tool results expose `sentRevision` and `resultingRevision` separately.
+- [x] Display the reconciled state after ambiguous cancellation. — Evidence: client results carry `reconciled`; unresolved ambiguity refreshes authoritative state; diagnostics render the reconciled revision and journey status.
+- [x] Display the complete accepted event chain. — Evidence: the client follows 50-event pages instead of retaining only the last page, the UI no longer truncates accepted events, and the Durable Object enforces a 200-event ceiling so the bounded chain is complete.
 
 ## 5. Three agency modes
 

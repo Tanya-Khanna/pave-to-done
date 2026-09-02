@@ -5,6 +5,9 @@ declare global {
 
   interface WebMCPToolAnnotations {
     readOnlyHint?: boolean;
+    destructiveHint?: boolean;
+    idempotentHint?: boolean;
+    openWorldHint?: boolean;
     untrustedContentHint?: boolean;
   }
 

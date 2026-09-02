@@ -9,6 +9,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "deploy": "npm run build && wrangler deploy",
+    "types:worker": "wrangler types worker-configuration.d.ts --include-runtime false",
+    "types:worker:check": "wrangler types worker-configuration.d.ts --include-runtime false --check",
     "typecheck": "tsc -b --pretty false",
     "test": "vitest run",
     "test:watch": "vitest",
