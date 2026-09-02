@@ -29,8 +29,9 @@
 **Completed in Step 12:** 46 of 46 items
 **Completed in Step 13:** 13 of 13 items
 **Completed in Step 14:** 12 of 12 items
+**Completed in Step 15:** 5 of 7 items
 
-**Current implementation deployment:** Cloudflare version `eb501345-720e-40a9-80f9-6e4d6c37076f` from verified GitHub commit `3796d51` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33656117860`, the live protocol verifier, all 91 local unit/integration tests, all 30 deployed browser tests, and 30 final in-app-browser WebMCP prompt trials passed.
+**Current implementation deployment:** Cloudflare version `b7d26bd2-d51c-437b-a0ae-ad072587de0f` from verified GitHub commit `1b945e6` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33657148841`, the live protocol verifier, all 91 local unit/integration tests, all 32 deployed browser tests, and 30 final in-app-browser WebMCP prompt trials passed.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -283,11 +284,11 @@
 
 - [ ] Achieve a Lighthouse performance score of at least 90.
 - [ ] Achieve a Lighthouse accessibility score of at least 90.
-- [ ] Remove all production console errors.
-- [ ] Verify no third-party request blocks the main flow.
-- [ ] Test guidance at phone, tablet, laptop, and wide-desktop widths.
-- [ ] Confirm coach elements remain visible and do not cover targets.
-- [ ] Confirm animations use transform/opacity where possible and remain smooth under throttling.
+- [x] Remove all production console errors. — Evidence: `e2e/performance-quality.spec.ts` captures browser console errors and uncaught page errors while loading the landing page, entering the demo, and starting the shared journey; the deployed Cloudflare run passed with both collections empty.
+- [x] Verify no third-party request blocks the main flow. — Evidence: the same deployed browser test records every HTTP(S) request during the main flow and fails on any origin other than `pave-to-done.north-raincoat.workers.dev`; it passed with no third-party origins.
+- [x] Test guidance at phone, tablet, laptop, and wide-desktop widths. — Evidence: `e2e/guidance.spec.ts` verifies the live semantic target attachment at 390×844, 1024×720, 1440×900, and 1920×1080 with less than two pixels of positional variance; all deployed checks passed.
+- [x] Confirm coach elements remain visible and do not cover targets. — Evidence: deployed guidance tests require the coach to remain at least 11 pixels inside every viewport, keep both overlay layers at `pointer-events: none`, and prove the underlying human action advances the journey.
+- [x] Confirm animations use transform/opacity where possible and remain smooth under throttling. — Evidence: `e2e/performance-quality.spec.ts` inspects production CSSOM keyframes and permits transform, opacity, and SVG stroke motion while rejecting layout properties; `e2e/landing-experience.spec.ts` exercises signature interactions under 6× CPU throttling. Both deployed tests passed.
 
 ## 16. Human usability testing
 
