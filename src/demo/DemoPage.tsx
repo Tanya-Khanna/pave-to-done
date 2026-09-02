@@ -556,6 +556,23 @@ function JourneyControl({
     );
   if (snapshot.status === "repair_required")
     return <RepairBoundary snapshot={snapshot} run={run} />;
+  if (snapshot.status === "blocked")
+    return (
+      <div className="blocked-card" role="alert">
+        <div>
+          <CircleAlert size={19} />
+        </div>
+        <span>JOURNEY STOPPED</span>
+        <h2>Nothing unsafe was inferred.</h2>
+        <p>{snapshot.blockedReason ?? "This journey cannot continue safely."}</p>
+        <button
+          className="button ghost full"
+          onClick={() => void run("reset_session_ui", { type: "ResetSession" })}
+        >
+          <RotateCcw size={15} /> Reset journey
+        </button>
+      </div>
+    );
   if (snapshot.status === "awaiting_confirmation" && snapshot.pendingConfirmation)
     return <Confirmation snapshot={snapshot} run={run} />;
   if (snapshot.status === "paused")
@@ -853,6 +870,17 @@ function RepairBoundary({
         }
       >
         <ShieldCheck size={15} /> Approve material repair
+      </button>
+      <button
+        className="button ghost full"
+        onClick={() =>
+          void run("reject_repair_ui", {
+            type: "RejectRepair",
+            repairId: snapshot.pendingRepair!.id,
+          })
+        }
+      >
+        <CircleAlert size={15} /> Stop this journey
       </button>
       <small>The repair cannot lower risk or expand agent authority.</small>
     </div>

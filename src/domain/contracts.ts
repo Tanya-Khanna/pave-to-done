@@ -51,6 +51,7 @@ export const journeyCommandSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("ChangePortalVersion"), version: portalVersion }).strict(),
   z.object({ type: z.literal("ProposeRepair"), businessPurpose: boundedText }).strict(),
   z.object({ type: z.literal("ApproveRepair"), repairId: z.string().min(8).max(80) }).strict(),
+  z.object({ type: z.literal("RejectRepair"), repairId: z.string().min(8).max(80) }).strict(),
   z
     .object({ type: z.literal("StartRecording"), narration: z.string().max(500).optional() })
     .strict(),

@@ -90,19 +90,9 @@ export const portalV1Manifest: CapabilityManifest = {
 export const portalV2Manifest: CapabilityManifest = {
   version: "manifest.expense.v2",
   portalVersion: "expense.v2",
-  capabilities: [
-    {
-      id: "expense.create",
-      version: "2",
-      title: "Add expense",
-      description: "Open the expense form from the header.",
-      risk: "reversible",
-      allowedActors: ["human", "agent"],
-      anchorKey: "header.addExpense",
-      aliases: ["new expense", "add expense"],
-    },
-    ...shared.map((c) => ({ ...c, version: "2" })),
-    {
+  capabilities: (() => {
+    const current = shared.map((capability) => ({ ...capability, version: "2" }));
+    current.splice(5, 0, {
       id: "expense.businessPurpose",
       version: "2",
       title: "Add business purpose",
@@ -111,8 +101,21 @@ export const portalV2Manifest: CapabilityManifest = {
       allowedActors: ["human", "agent"],
       requiredField: "businessPurpose",
       anchorKey: "expense.businessPurpose",
-    },
-  ],
+    });
+    return [
+      {
+        id: "expense.create",
+        version: "2",
+        title: "Add expense",
+        description: "Open the expense form from the header.",
+        risk: "reversible" as const,
+        allowedActors: ["human", "agent"] as const,
+        anchorKey: "header.addExpense",
+        aliases: ["new expense", "add expense"],
+      },
+      ...current,
+    ];
+  })(),
 };
 
 export function getManifest(version: PortalVersion): CapabilityManifest {

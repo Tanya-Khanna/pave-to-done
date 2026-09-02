@@ -9,6 +9,7 @@ import type {
 
 const SESSION_KEY = "pave.session.v1";
 const PENDING_KEY = "pave.pending-operations.v1";
+let sessionCreation: Promise<JourneySnapshot> | null = null;
 
 interface PendingOperation {
   operationId: string;
@@ -33,14 +34,22 @@ export function getStoredSessionId() {
 }
 
 export async function createSession(): Promise<JourneySnapshot> {
-  const response = await fetch("/api/sessions", {
-    method: "POST",
-    headers: apiHeaders(),
-    body: "{}",
-  });
-  const data = await parse<{ ok: true; snapshot: JourneySnapshot }>(response);
-  sessionStorage.setItem(SESSION_KEY, data.snapshot.sessionId);
-  return data.snapshot;
+  if (sessionCreation) return sessionCreation;
+  sessionCreation = (async () => {
+    const response = await fetch("/api/sessions", {
+      method: "POST",
+      headers: apiHeaders(),
+      body: "{}",
+    });
+    const data = await parse<{ ok: true; snapshot: JourneySnapshot }>(response);
+    sessionStorage.setItem(SESSION_KEY, data.snapshot.sessionId);
+    return data.snapshot;
+  })();
+  try {
+    return await sessionCreation;
+  } finally {
+    sessionCreation = null;
+  }
 }
 
 export async function getSession(

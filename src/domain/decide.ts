@@ -1,5 +1,7 @@
-import { compileSteps, buildRepair } from "./compiler";
-import { DEFAULT_RECORDED_GUIDE } from "./fixtures";
+import { compileSteps } from "./compiler";
+import { DEFAULT_RECORDED_GUIDE, DEMO_BUSINESS_PURPOSE } from "./fixtures";
+import { compileHealing, createRepair, validateRepair } from "./healingCompiler";
+import { getManifest } from "./manifests";
 import { actorMayExecute } from "./policies";
 import type { CommandEnvelope, Decision, DomainError, JourneySnapshot, JourneyStep } from "./types";
 
@@ -26,6 +28,17 @@ function requireActive(snapshot: JourneySnapshot): Decision | null {
     return fail("AWAITING_HUMAN", "A person must review the prepared submission.");
   if (snapshot.status === "completed")
     return fail("PRECONDITION_FAILED", "This journey is already complete.");
+  if (snapshot.status === "blocked")
+    return fail(
+      "REPAIR_REQUIRED",
+      snapshot.blockedReason ?? "This journey is blocked. Reset it or resolve the unsafe change.",
+    );
+  const liveManifest = getManifest(snapshot.portalVersion);
+  if (snapshot.capabilityManifestVersion !== liveManifest.version)
+    return fail(
+      "REPAIR_REQUIRED",
+      `Journey manifest ${snapshot.capabilityManifestVersion} is stale; ${liveManifest.version} must be reconciled before the next step.`,
+    );
   return null;
 }
 
@@ -42,6 +55,15 @@ function canRunCurrent(
     return fail(
       "PRECONDITION_FAILED",
       `Current step is ${step.capabilityId}; complete it before ${expectedCapability}.`,
+    );
+  }
+  const capability = getManifest(snapshot.portalVersion).capabilities.find(
+    (candidate) => candidate.id === step.capabilityId,
+  );
+  if (envelope.actor.kind === "agent" && !capability?.allowedActors.includes("agent")) {
+    return fail(
+      "POLICY_DENIED",
+      `${step.capabilityId} is human-only in ${snapshot.capabilityManifestVersion}. Complete it in the visible interface.`,
     );
   }
   if (!actorMayExecute(envelope.actor, snapshot.agencyMode, step.risk, step)) {
@@ -97,10 +119,10 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
     }
 
     case "ChangeAgencyMode":
-      if (snapshot.status === "awaiting_confirmation")
+      if (["repair_required", "awaiting_confirmation", "blocked"].includes(snapshot.status))
         return fail(
           "AWAITING_HUMAN",
-          "Finish or reset the pending confirmation before changing modes.",
+          "Resolve or reset the current human control boundary before changing modes.",
         );
       if (command.mode === snapshot.agencyMode) return { ok: true, events: [] };
       if (actor.kind === "agent") {
@@ -273,13 +295,19 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
         return fail("POLICY_DENIED", "The demo portal version switch is a human UI control.");
       if (command.version === snapshot.portalVersion)
         return fail("PRECONDITION_FAILED", `Portal is already ${command.version}.`);
+      const assessment = compileHealing({
+        snapshot,
+        sourceManifest: getManifest(snapshot.portalVersion),
+        currentManifest: getManifest(command.version),
+        requirementDescriptions: { businessPurpose: DEMO_BUSINESS_PURPOSE },
+      });
       if (!snapshot.source)
         return {
           ok: true,
           events: [
             {
               type: "PortalVersionChanged",
-              safePayload: { version: command.version, requiresRepair: false },
+              safePayload: { version: command.version, requiresRepair: false, assessment },
             },
           ],
         };
@@ -289,7 +317,13 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
           events: [
             {
               type: "PortalVersionChanged",
-              safePayload: { version: command.version, requiresRepair: true },
+              safePayload: {
+                version: command.version,
+                requiresRepair: assessment.overall === "repair_required",
+                blocked: assessment.overall === "blocked",
+                assessment,
+                steps: assessment.proposedSteps,
+              },
             },
           ],
         };
@@ -305,9 +339,21 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
         return fail("POLICY_DENIED", "The agent proposes a bounded repair through WebMCP.");
       if (snapshot.status !== "repair_required" || snapshot.portalVersion !== "expense.v2")
         return fail("PRECONDITION_FAILED", "No repair is currently required.");
+      if (!snapshot.healingAssessment || snapshot.healingAssessment.overall !== "repair_required")
+        return fail("PRECONDITION_FAILED", "No approvable healing assessment is current.");
       if (snapshot.pendingRepair)
         return fail("AWAITING_HUMAN", "A repair proposal is already waiting for human review.");
-      const repair = buildRepair(snapshot, command.businessPurpose);
+      const assessment = compileHealing({
+        snapshot,
+        sourceManifest: getManifest("expense.v1"),
+        currentManifest: getManifest(snapshot.portalVersion),
+        requirementDescriptions: {
+          businessPurpose: command.businessPurpose || DEMO_BUSINESS_PURPOSE,
+        },
+      });
+      if (assessment.overall !== "repair_required")
+        return fail("PRECONDITION_FAILED", "The current manifest no longer needs that repair.");
+      const repair = createRepair(snapshot, assessment);
       return { ok: true, events: [{ type: "JourneyRepairProposed", safePayload: { repair } }] };
     }
 
@@ -316,6 +362,9 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
         return fail("POLICY_DENIED", "Repair approval is human-only.");
       if (!snapshot.pendingRepair || snapshot.pendingRepair.id !== command.repairId)
         return fail("NOT_FOUND", "That repair proposal is no longer current.");
+      const validation = validateRepair(snapshot, snapshot.pendingRepair);
+      if (!validation.ok)
+        return fail("POLICY_DENIED", `Unsafe repair rejected: ${validation.reason}`);
       return {
         ok: true,
         events: [
@@ -329,6 +378,24 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
         ],
       };
     }
+
+    case "RejectRepair":
+      if (actor.kind !== "human" || actor.surface !== "ui")
+        return fail("POLICY_DENIED", "Repair rejection is human-only.");
+      if (!snapshot.pendingRepair || snapshot.pendingRepair.id !== command.repairId)
+        return fail("NOT_FOUND", "That repair proposal is no longer current.");
+      return {
+        ok: true,
+        events: [
+          {
+            type: "JourneyRepairRejected",
+            safePayload: {
+              repairId: command.repairId,
+              reason: "The person rejected the material workflow change. Reset to start over.",
+            },
+          },
+        ],
+      };
 
     case "StartRecording":
       if (actor.kind !== "human" || actor.surface !== "ui")

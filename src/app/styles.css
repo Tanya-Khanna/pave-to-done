@@ -1192,6 +1192,7 @@ summary:focus-visible {
 .confirmation-card,
 .repair-card,
 .paused-card,
+.blocked-card,
 .completion-card {
   padding: 14px;
 }
@@ -1219,6 +1220,41 @@ summary:focus-visible {
 .paused-card h2,
 .paused-card p {
   margin: 0;
+}
+.blocked-card {
+  display: grid;
+  justify-items: start;
+  gap: 10px;
+  padding: 20px 14px;
+}
+.blocked-card > div {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  color: var(--coral);
+  border: 1px solid rgba(255, 112, 95, 0.38);
+  border-radius: 10px;
+  background: rgba(255, 112, 95, 0.08);
+}
+.blocked-card > span {
+  color: var(--coral);
+  font:
+    800 8px ui-monospace,
+    monospace;
+  letter-spacing: 0.12em;
+}
+.blocked-card h2,
+.blocked-card p {
+  margin: 0;
+}
+.blocked-card h2 {
+  font-size: 17px;
+}
+.blocked-card p {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
 }
 .paused-card h2 {
   font-size: 17px;

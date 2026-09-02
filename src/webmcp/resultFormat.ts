@@ -14,6 +14,12 @@ export function nextControlBoundary(snapshot: JourneySnapshot): NextControlBound
       reason:
         "The journey is paused and only a person can resume it from the visible Journey dock.",
     };
+  if (snapshot.status === "blocked")
+    return {
+      actor: "human",
+      action: "reset_or_recover_in_ui",
+      reason: snapshot.blockedReason ?? "The journey cannot continue safely.",
+    };
   if (snapshot.status === "awaiting_confirmation")
     return {
       actor: "human",
@@ -72,7 +78,9 @@ function safeSummary(snapshot: JourneySnapshot) {
           risk: step.risk,
         }
       : null,
-    needsHuman: ["paused", "awaiting_confirmation", "repair_required"].includes(snapshot.status),
+    needsHuman: ["paused", "blocked", "awaiting_confirmation", "repair_required"].includes(
+      snapshot.status,
+    ),
     historyVerified: snapshot.historyVerified,
   };
 }
@@ -131,7 +139,7 @@ export function commandResult(summary: string, result: CommandResult) {
       },
     };
   }
-  const needsHuman = ["paused", "awaiting_confirmation", "repair_required"].includes(
+  const needsHuman = ["paused", "blocked", "awaiting_confirmation", "repair_required"].includes(
     result.snapshot.status,
   );
   return {

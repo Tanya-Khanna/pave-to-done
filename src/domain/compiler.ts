@@ -1,14 +1,7 @@
 import { getManifest } from "./manifests";
 import { assignActor } from "./policies";
-import { DEMO_BUSINESS_PURPOSE, DEMO_CATEGORIES, DEMO_PROJECTS, DEMO_RECEIPT } from "./fixtures";
-import type {
-  AgencyMode,
-  ExpenseProjection,
-  JourneySnapshot,
-  JourneyStep,
-  PortalVersion,
-  RepairProposal,
-} from "./types";
+import { DEMO_CATEGORIES, DEMO_PROJECTS, DEMO_RECEIPT } from "./fixtures";
+import type { AgencyMode, ExpenseProjection, JourneyStep, PortalVersion } from "./types";
 
 const baseSteps: Array<[string, string, string, keyof ExpenseProjection]> = [
   [
@@ -89,38 +82,4 @@ export function reassignSteps(steps: JourneyStep[], mode: AgencyMode): JourneySt
     ...step,
     assignedActor: assignActor(index, step.risk, mode),
   }));
-}
-
-export function buildRepair(snapshot: JourneySnapshot, businessPurpose: string): RepairProposal {
-  const businessStep: JourneyStep = {
-    id: "step-business-purpose",
-    capabilityId: "expense.businessPurpose",
-    title: "Add business purpose",
-    description: businessPurpose || DEMO_BUSINESS_PURPOSE,
-    status: "pending",
-    assignedActor: assignActor(4, "reversible", snapshot.agencyMode),
-    risk: "reversible",
-    anchorKey: "expense.businessPurpose",
-    requiredField: "businessPurpose",
-  };
-  const insertBefore = snapshot.steps.findIndex((s) => s.capabilityId === "expense.prepare");
-  const steps = snapshot.steps.filter((s) => s.capabilityId !== businessStep.capabilityId);
-  steps.splice(insertBefore < 0 ? steps.length : insertBefore, 0, businessStep);
-  return {
-    id: crypto.randomUUID(),
-    fromManifest: "manifest.expense.v1",
-    toManifest: "manifest.expense.v2",
-    safeRemaps: [
-      { capabilityId: "expense.create", from: "sidebar.newExpense", to: "header.addExpense" },
-    ],
-    materialChanges: [
-      {
-        capabilityId: "expense.businessPurpose",
-        reason: "Portal v2 requires a business purpose before preparation.",
-        requiredField: "businessPurpose",
-      },
-    ],
-    proposedSteps: steps,
-    status: "proposed",
-  };
 }

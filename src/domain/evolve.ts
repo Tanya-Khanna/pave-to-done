@@ -69,6 +69,8 @@ export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySn
         steps: event.safePayload.steps as JourneyStep[],
         pendingRepair: undefined,
         pendingConfirmation: undefined,
+        healingAssessment: undefined,
+        blockedReason: undefined,
         expense: {
           ...previous.expense,
           date: "",
@@ -169,11 +171,32 @@ export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySn
       break;
     case "PortalVersionChanged": {
       const version = event.safePayload.version as JourneySnapshot["portalVersion"];
+      const assessment = event.safePayload.assessment as JourneySnapshot["healingAssessment"];
+      const proposedSteps = event.safePayload.steps as JourneyStep[] | undefined;
+      const applyAutomatically =
+        !event.safePayload.requiresRepair && !event.safePayload.blocked && proposedSteps?.length;
+      const nextSteps = applyAutomatically ? proposedSteps : next.steps;
+      const guided = next.lastGuidance
+        ? nextSteps.find((step) => step.id === next.lastGuidance?.stepId)
+        : undefined;
       next = {
         ...next,
         portalVersion: version,
-        capabilityManifestVersion: `manifest.${version}`,
-        status: event.safePayload.requiresRepair ? "repair_required" : next.status,
+        capabilityManifestVersion: assessment?.toManifest ?? `manifest.${version}`,
+        status: event.safePayload.blocked
+          ? "blocked"
+          : event.safePayload.requiresRepair
+            ? "repair_required"
+            : next.status,
+        steps: nextSteps,
+        healingAssessment: assessment,
+        blockedReason: event.safePayload.blocked
+          ? (assessment?.blockedReasons[0] ?? "The portal change cannot be repaired safely.")
+          : undefined,
+        lastGuidance:
+          guided && next.lastGuidance
+            ? { ...next.lastGuidance, anchorKey: guided.anchorKey }
+            : next.lastGuidance,
         pendingRepair: undefined,
       };
       break;
@@ -187,9 +210,32 @@ export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySn
       break;
     case "JourneyRepairApproved": {
       const steps = event.safePayload.steps as JourneyStep[];
-      next = { ...next, status: "active", pendingRepair: undefined, steps: advance(steps, []) };
+      const advanced = advance(steps, []);
+      const guided = next.lastGuidance
+        ? advanced.find((step) => step.id === next.lastGuidance?.stepId)
+        : undefined;
+      next = {
+        ...next,
+        status: "active",
+        pendingRepair: undefined,
+        healingAssessment: undefined,
+        blockedReason: undefined,
+        steps: advanced,
+        lastGuidance:
+          guided && next.lastGuidance
+            ? { ...next.lastGuidance, anchorKey: guided.anchorKey }
+            : next.lastGuidance,
+      };
       break;
     }
+    case "JourneyRepairRejected":
+      next = {
+        ...next,
+        status: "blocked",
+        pendingRepair: undefined,
+        blockedReason: String(event.safePayload.reason),
+      };
+      break;
     case "RecordingStarted":
       next = {
         ...next,

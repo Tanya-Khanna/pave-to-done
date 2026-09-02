@@ -65,15 +65,52 @@ export interface Guide {
 
 export interface Repair {
   id: string;
+  sessionId: string;
+  basedOnRevision: number;
   fromManifest: string;
   toManifest: string;
-  safeRemaps: Array<{ capabilityId: string; from: string; to: string }>;
+  safeRemaps: Array<{
+    capabilityId: string;
+    from: string;
+    to: string;
+    fromCapabilityId?: string;
+    toCapabilityId?: string;
+  }>;
   materialChanges: Array<{ capabilityId: string; reason: string; requiredField: string }>;
+  classifications: HealingStepClassification[];
   proposedSteps: JourneyStep[];
   status: "proposed" | "approved";
 }
 
 export type RepairProposal = Repair;
+
+export type HealingDisposition = "compatible" | "remapped" | "repair_required" | "blocked";
+
+export interface HealingStepClassification {
+  stepId: string;
+  fromCapabilityId: string;
+  toCapabilityId?: string;
+  disposition: HealingDisposition;
+  reason: string;
+  satisfied: boolean;
+  fromRisk: CapabilityRisk;
+  toRisk?: CapabilityRisk;
+  fromAgentEligible: boolean;
+  toAgentEligible?: boolean;
+  fromAnchor?: string;
+  toAnchor?: string;
+}
+
+export interface HealingAssessment {
+  fromManifest: string;
+  toManifest: string;
+  overall: HealingDisposition;
+  classifications: HealingStepClassification[];
+  safeRemaps: Repair["safeRemaps"];
+  materialChanges: Repair["materialChanges"];
+  blockedReasons: string[];
+  proposedSteps: JourneyStep[];
+}
 
 export interface ConfirmationSummary {
   challenge: string;
@@ -165,6 +202,8 @@ export interface JourneySnapshot {
   steps: JourneyStep[];
   expense: ExpenseProjection;
   pendingRepair?: Repair;
+  healingAssessment?: HealingAssessment;
+  blockedReason?: string;
   pendingConfirmation?: ConfirmationSummary;
   recording?: RecordingProjection;
   lastGuidance?: { stepId: string; message: string; anchorKey?: string };
@@ -187,6 +226,7 @@ export type JourneyCommand =
   | { type: "ChangePortalVersion"; version: PortalVersion }
   | { type: "ProposeRepair"; businessPurpose: string }
   | { type: "ApproveRepair"; repairId: string }
+  | { type: "RejectRepair"; repairId: string }
   | { type: "StartRecording"; narration?: string }
   | { type: "StopRecording" }
   | { type: "SaveGuideDraft"; title: string; narration?: string }
