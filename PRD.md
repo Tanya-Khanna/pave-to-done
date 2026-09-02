@@ -343,21 +343,21 @@ Each command has a cryptographically random operation ID. Repeating the ID retur
 
 ### Tool surface
 
-| Tool                         | Type                      | Purpose and visible effect                                                                          |
-| ---------------------------- | ------------------------- | --------------------------------------------------------------------------------------------------- |
-| `get_app_context`            | Read                      | Return current page, portal version, user-visible task state, policy, and pending control boundary. |
-| `list_capabilities`          | Read                      | Return the live semantic actions, required data, risk, and current availability.                    |
-| `list_guides`                | Read                      | Return approved and draft guides relevant to the current task.                                      |
-| `get_journey`                | Read                      | Return current steps, verified progress, actor, and blocking state.                                 |
-| `get_recording_trace`        | Read, untrusted           | Return redacted semantic events and expert narration for guide drafting.                            |
-| `create_journey`             | Reversible                | Validate and display an on-demand plan referencing registered capabilities.                         |
+| Tool                         | Type                      | Purpose and visible effect                                                                                           |
+| ---------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| `get_app_context`            | Read                      | Return current page, portal version, user-visible task state, policy, and pending control boundary.                  |
+| `list_capabilities`          | Read                      | Return the live semantic actions, required data, risk, and current availability.                                     |
+| `list_guides`                | Read                      | Return approved and draft guides relevant to the current task.                                                       |
+| `get_journey`                | Read                      | Return current steps, verified progress, actor, and blocking state.                                                  |
+| `get_recording_trace`        | Read, untrusted           | Return redacted semantic events and expert narration for guide drafting.                                             |
+| `create_journey`             | Reversible                | Validate and display an on-demand plan referencing registered capabilities.                                          |
 | `set_agency_mode`            | Reversible                | Request a mode change; authority reductions apply at a safe boundary, while expansions require the visible human UI. |
-| `show_guidance`              | Reversible UI             | Resolve a valid capability to its current anchor and render the accessible guide treatment.         |
-| `create_expense_draft`       | Reversible                | Create a real visible draft if policy and mode allow the agent to do so.                            |
-| `update_expense_draft`       | Reversible                | Update allowlisted draft fields and show the result in the portal.                                  |
-| `prepare_expense_submission` | Consequential preparation | Validate the draft and open the human confirmation card; it cannot finalize submission.             |
-| `propose_journey_repair`     | Reversible proposal       | Validate and display a repair diff; approval remains human-only.                                    |
-| `save_guide_draft`           | Reversible                | Save an agent-proposed guide draft from a recording; publication remains human-only.                |
+| `show_guidance`              | Reversible UI             | Resolve a valid capability to its current anchor and render the accessible guide treatment.                          |
+| `create_expense_draft`       | Reversible                | Create a real visible draft if policy and mode allow the agent to do so.                                             |
+| `update_expense_draft`       | Reversible                | Update allowlisted draft fields and show the result in the portal.                                                   |
+| `prepare_expense_submission` | Consequential preparation | Validate the draft and open the human confirmation card; it cannot finalize submission.                              |
+| `propose_journey_repair`     | Reversible proposal       | Validate and display a repair diff; approval remains human-only.                                                     |
+| `save_guide_draft`           | Reversible                | Save an agent-proposed guide draft from a recording; publication remains human-only.                                 |
 
 Tool names are short, descriptions state when and when not to call them, schemas use enums and bounds with `additionalProperties: false`, and outputs stay concise. Read tools use `readOnlyHint`; recording and receipt-derived content use `untrustedContentHint` because it may contain text an agent must not treat as instructions.
 
