@@ -37,6 +37,16 @@ export const toolInputValidators = {
       value: z.string().trim().min(1).max(240).describe("Bounded field value."),
     })
     .strict(),
+  updateMileageDraft: z
+    .object({
+      field: z
+        .enum(["origin", "destination", "distanceMiles", "tripDate", "purpose", "vehicleType"])
+        .describe("Current mileage field."),
+      value: z
+        .union([z.string().trim().min(1).max(240), z.number().min(0.1).max(1000)])
+        .describe("Bounded field value; distance is 0.1 to 1,000 miles."),
+    })
+    .strict(),
   proposeRepair: z
     .object({
       businessPurpose: z
@@ -44,7 +54,15 @@ export const toolInputValidators = {
         .trim()
         .min(8)
         .max(240)
-        .describe("Proposed value for the newly required field."),
+        .optional()
+        .describe("Expense V2 required field value."),
+      vehicleType: z
+        .string()
+        .trim()
+        .min(3)
+        .max(80)
+        .optional()
+        .describe("Mileage V2 vehicle category."),
     })
     .strict(),
   saveGuideDraft: z
@@ -100,6 +118,7 @@ export const toolInputSchemas = {
   createJourney: inputSchema("createJourney"),
   createExpenseDraft: inputSchema("createExpenseDraft"),
   updateExpenseDraft: inputSchema("updateExpenseDraft"),
+  updateMileageDraft: inputSchema("updateMileageDraft"),
   proposeRepair: inputSchema("proposeRepair"),
   saveGuideDraft: inputSchema("saveGuideDraft"),
 } as const;

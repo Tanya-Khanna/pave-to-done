@@ -1,5 +1,5 @@
-import { compileSteps } from "./compiler";
-import { DEFAULT_RECORDED_GUIDE, DEMO_BUSINESS_PURPOSE } from "./fixtures";
+import { compileSteps, validateJourneyPlan } from "./compiler";
+import { DEFAULT_RECORDED_GUIDE, DEMO_BUSINESS_PURPOSE, DEMO_MILEAGE } from "./fixtures";
 import { compileHealing, createRepair, validateRepair } from "./healingCompiler";
 import { getManifest } from "./manifests";
 import { actorMayExecute } from "./policies";
@@ -103,6 +103,15 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
       const mode = command.mode ?? snapshot.agencyMode;
       const goal =
         command.source.kind === "on-demand" ? command.source.goal : DEFAULT_RECORDED_GUIDE.goal;
+      const portalVersion =
+        command.source.kind === "on-demand" && /\bmileage\b/i.test(command.source.goal)
+          ? ("mileage.v1" as const)
+          : ("expense.v1" as const);
+      const manifest = getManifest(portalVersion);
+      const steps = compileSteps(mode, portalVersion);
+      const validation = validateJourneyPlan(steps, manifest);
+      if (!validation.ok)
+        return fail("INVALID_INPUT", `Generated journey is invalid: ${validation.reason}`);
       return {
         ok: true,
         events: [
@@ -112,7 +121,9 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
               source: command.source,
               mode,
               goal,
-              steps: compileSteps(mode, snapshot.portalVersion),
+              portalVersion,
+              manifestVersion: manifest.version,
+              steps,
             },
           },
         ],
@@ -231,6 +242,33 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
       };
     }
 
+    case "UpdateMileageDraft": {
+      const capabilityId =
+        command.field === "distanceMiles"
+          ? "mileage.distance"
+          : command.field === "tripDate"
+            ? "mileage.date"
+            : `mileage.${command.field}`;
+      const denial = canRunCurrent(snapshot, envelope, capabilityId);
+      if (denial) return denial;
+      if (
+        command.field === "distanceMiles" &&
+        (typeof command.value !== "number" || command.value < 0.1 || command.value > 1000)
+      )
+        return fail("INVALID_INPUT", "Distance must be between 0.1 and 1,000 miles.");
+      if (command.field !== "distanceMiles" && typeof command.value !== "string")
+        return fail("INVALID_INPUT", `${command.field} must be text.`);
+      return {
+        ok: true,
+        events: [
+          {
+            type: "MileageFieldUpdated",
+            safePayload: { field: command.field, value: command.value, capabilityId },
+          },
+        ],
+      };
+    }
+
     case "PrepareExpenseSubmission": {
       const denial = canRunCurrent(snapshot, envelope, "expense.prepare");
       if (denial) return denial;
@@ -251,12 +289,50 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
           {
             type: "ExpenseSubmissionPrepared",
             safePayload: {
+              kind: "expense",
               challenge: crypto.randomUUID(),
               expiresAt,
               amount: snapshot.expense.amount,
               project: snapshot.expense.project,
               category: snapshot.expense.category,
               merchant: snapshot.expense.merchant,
+            },
+          },
+        ],
+      };
+    }
+
+    case "PrepareMileageSubmission": {
+      const denial = canRunCurrent(snapshot, envelope, "mileage.prepare");
+      if (denial) return denial;
+      const required: Array<keyof typeof snapshot.mileage> = [
+        "origin",
+        "destination",
+        "distanceMiles",
+        "tripDate",
+        "purpose",
+      ];
+      if (snapshot.portalVersion === "mileage.v2") required.push("vehicleType");
+      const missing = required.filter((field) => !snapshot.mileage[field]);
+      if (missing.length)
+        return fail(
+          "PRECONDITION_FAILED",
+          `Missing required mileage fields: ${missing.join(", ")}.`,
+        );
+      const distanceMiles = snapshot.mileage.distanceMiles!;
+      return {
+        ok: true,
+        events: [
+          {
+            type: "MileageSubmissionPrepared",
+            safePayload: {
+              kind: "mileage",
+              challenge: crypto.randomUUID(),
+              expiresAt: new Date(Date.now() + 5 * 60_000).toISOString(),
+              distanceMiles,
+              origin: snapshot.mileage.origin,
+              destination: snapshot.mileage.destination,
+              reimbursementAmount: Number((distanceMiles * DEMO_MILEAGE.ratePerMile).toFixed(2)),
             },
           },
         ],
@@ -271,7 +347,11 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
         );
       if (!command.userActivated)
         return fail("POLICY_DENIED", "A current human activation is required.");
-      if (!snapshot.pendingConfirmation || snapshot.status !== "awaiting_confirmation")
+      if (
+        !snapshot.pendingConfirmation ||
+        snapshot.pendingConfirmation.kind !== "expense" ||
+        snapshot.status !== "awaiting_confirmation"
+      )
         return fail("PRECONDITION_FAILED", "No prepared submission is awaiting confirmation.");
       if (snapshot.pendingConfirmation.challenge !== command.challenge)
         return fail("POLICY_DENIED", "The confirmation challenge is invalid or already used.");
@@ -291,6 +371,32 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
       };
     }
 
+    case "ConfirmMileageSubmission": {
+      if (actor.kind !== "human" || actor.surface !== "ui")
+        return fail("POLICY_DENIED", "Mileage submission is human-only and has no WebMCP tool.");
+      if (!command.userActivated)
+        return fail("POLICY_DENIED", "A current human activation is required.");
+      if (
+        !snapshot.pendingConfirmation ||
+        snapshot.pendingConfirmation.kind !== "mileage" ||
+        snapshot.status !== "awaiting_confirmation"
+      )
+        return fail("PRECONDITION_FAILED", "No mileage reimbursement is awaiting confirmation.");
+      if (snapshot.pendingConfirmation.challenge !== command.challenge)
+        return fail("POLICY_DENIED", "The confirmation challenge is invalid or already used.");
+      if (Date.parse(snapshot.pendingConfirmation.expiresAt) < Date.now())
+        return fail("PRECONDITION_FAILED", "The confirmation expired; prepare it again.");
+      return {
+        ok: true,
+        events: [
+          {
+            type: "MileageSubmitted",
+            safePayload: { reimbursementId: `MILE-${String(snapshot.revision + 3100)}` },
+          },
+        ],
+      };
+    }
+
     case "ChangePortalVersion": {
       if (actor.kind !== "human" || actor.surface !== "ui")
         return fail("POLICY_DENIED", "The demo portal version switch is a human UI control.");
@@ -300,7 +406,10 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
         snapshot,
         sourceManifest: getManifest(snapshot.portalVersion),
         currentManifest: getManifest(command.version),
-        requirementDescriptions: { businessPurpose: DEMO_BUSINESS_PURPOSE },
+        requirementDescriptions: {
+          businessPurpose: DEMO_BUSINESS_PURPOSE,
+          vehicleType: DEMO_MILEAGE.vehicleType,
+        },
       });
       if (!snapshot.source)
         return {
@@ -312,7 +421,10 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
             },
           ],
         };
-      if (command.version === "expense.v2") {
+      if (
+        (snapshot.portalVersion === "expense.v1" && command.version === "expense.v2") ||
+        (snapshot.portalVersion === "mileage.v1" && command.version === "mileage.v2")
+      ) {
         return {
           ok: true,
           events: [
@@ -331,14 +443,14 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
       }
       return fail(
         "PRECONDITION_FAILED",
-        "The demo does not downgrade an active v2 journey; reset first.",
+        "The demo only upgrades an active journey to the matching v2 manifest; reset first.",
       );
     }
 
     case "ProposeRepair": {
       if (actor.kind !== "agent" || actor.surface !== "webmcp")
         return fail("POLICY_DENIED", "The agent proposes a bounded repair through WebMCP.");
-      if (snapshot.status !== "repair_required" || snapshot.portalVersion !== "expense.v2")
+      if (snapshot.status !== "repair_required" || !snapshot.portalVersion.endsWith(".v2"))
         return fail("PRECONDITION_FAILED", "No repair is currently required.");
       if (!snapshot.healingAssessment || snapshot.healingAssessment.overall !== "repair_required")
         return fail("PRECONDITION_FAILED", "No approvable healing assessment is current.");
@@ -346,10 +458,13 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
         return fail("AWAITING_HUMAN", "A repair proposal is already waiting for human review.");
       const assessment = compileHealing({
         snapshot,
-        sourceManifest: getManifest("expense.v1"),
+        sourceManifest: getManifest(
+          snapshot.portalVersion === "mileage.v2" ? "mileage.v1" : "expense.v1",
+        ),
         currentManifest: getManifest(snapshot.portalVersion),
         requirementDescriptions: {
           businessPurpose: command.businessPurpose || DEMO_BUSINESS_PURPOSE,
+          vehicleType: command.vehicleType || DEMO_MILEAGE.vehicleType,
         },
       });
       if (assessment.overall !== "repair_required")

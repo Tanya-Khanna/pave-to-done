@@ -118,8 +118,110 @@ export const portalV2Manifest: CapabilityManifest = {
   })(),
 };
 
+const mileageShared: CapabilityDefinition[] = [
+  {
+    id: "mileage.origin",
+    version: "1",
+    title: "Set starting point",
+    description: "Choose where the reimbursable trip began.",
+    risk: "reversible",
+    allowedActors: ["human", "agent"],
+    mileageRequiredField: "origin",
+    anchorKey: "mileage.origin",
+  },
+  {
+    id: "mileage.destination",
+    version: "1",
+    title: "Set destination",
+    description: "Choose where the reimbursable trip ended.",
+    risk: "reversible",
+    allowedActors: ["human", "agent"],
+    mileageRequiredField: "destination",
+    anchorKey: "mileage.destination",
+  },
+  {
+    id: "mileage.distance",
+    version: "1",
+    title: "Set trip distance",
+    description: "Enter the bounded route distance in miles.",
+    risk: "reversible",
+    allowedActors: ["human", "agent"],
+    mileageRequiredField: "distanceMiles",
+    anchorKey: "mileage.distance",
+    aliases: ["trip distance"],
+  },
+  {
+    id: "mileage.date",
+    version: "1",
+    title: "Set trip date",
+    description: "Enter the date of travel.",
+    risk: "reversible",
+    allowedActors: ["human", "agent"],
+    mileageRequiredField: "tripDate",
+    anchorKey: "mileage.date",
+  },
+  {
+    id: "mileage.purpose",
+    version: "1",
+    title: "Add trip purpose",
+    description: "Explain the business reason for the trip.",
+    risk: "reversible",
+    allowedActors: ["human", "agent"],
+    mileageRequiredField: "purpose",
+    anchorKey: "mileage.purpose",
+  },
+  {
+    id: "mileage.prepare",
+    version: "1",
+    title: "Prepare reimbursement",
+    description: "Validate mileage details and calculate a reviewable reimbursement.",
+    risk: "reversible",
+    allowedActors: ["human", "agent"],
+    anchorKey: "mileage.review",
+  },
+  {
+    id: "mileage.submit",
+    version: "1",
+    title: "Submit reimbursement",
+    description: "Create the final mileage reimbursement.",
+    risk: "sensitive",
+    allowedActors: ["human"],
+    anchorKey: "mileage.confirm",
+  },
+];
+
+export const mileageV1Manifest: CapabilityManifest = {
+  version: "manifest.mileage.v1",
+  portalVersion: "mileage.v1",
+  capabilities: mileageShared,
+};
+
+export const mileageV2Manifest: CapabilityManifest = {
+  version: "manifest.mileage.v2",
+  portalVersion: "mileage.v2",
+  capabilities: (() => {
+    const current = mileageShared.map((capability) => ({ ...capability, version: "2" }));
+    const distance = current.find((capability) => capability.id === "mileage.distance")!;
+    distance.anchorKey = "mileage.routeDistance";
+    current.splice(5, 0, {
+      id: "mileage.vehicleType",
+      version: "2",
+      title: "Choose vehicle type",
+      description: "Choose the policy category used for reimbursement.",
+      risk: "reversible",
+      allowedActors: ["human", "agent"],
+      mileageRequiredField: "vehicleType",
+      anchorKey: "mileage.vehicleType",
+    });
+    return current;
+  })(),
+};
+
 export function getManifest(version: PortalVersion): CapabilityManifest {
-  return version === "expense.v2" ? portalV2Manifest : portalV1Manifest;
+  if (version === "expense.v2") return portalV2Manifest;
+  if (version === "mileage.v1") return mileageV1Manifest;
+  if (version === "mileage.v2") return mileageV2Manifest;
+  return portalV1Manifest;
 }
 
 export function getCapability(version: PortalVersion, capabilityId: string) {

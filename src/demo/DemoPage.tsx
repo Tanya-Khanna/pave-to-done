@@ -31,10 +31,12 @@ import { navigate } from "../app/App";
 import { useJourneySession } from "../client/useJourneySession";
 import {
   DEFAULT_JOURNEY_GOAL,
+  DEFAULT_MILEAGE_GOAL,
   DEFAULT_RECORDED_GUIDE,
   DEMO_AGENCY_POLICIES,
   DEMO_BUSINESS_PURPOSE,
   DEMO_CATEGORIES,
+  DEMO_MILEAGE,
   DEMO_PROJECTS,
   DEMO_RECEIPT,
 } from "../domain/fixtures";
@@ -98,6 +100,7 @@ function DemoExperience() {
       </div>
     );
   const snapshot = session.snapshot;
+  const isMileage = snapshot.portalVersion.startsWith("mileage.");
   const current = snapshot.steps.find((step) => step.status === "current");
   const completed = snapshot.steps.filter((step) => step.status === "complete").length;
   const progress = snapshot.steps.length
@@ -248,49 +251,77 @@ function DemoExperience() {
         <section className="portal-main">
           <div className="portal-heading">
             <div>
-              <span className="portal-kicker">EXPENSES / NEW</span>
-              <h1>{snapshot.portalVersion === "expense.v2" ? "Add expense" : "New expense"}</h1>
-              <p>Receipt details and allocation</p>
+              <span className="portal-kicker">EXPENSES / {isMileage ? "MILEAGE" : "NEW"}</span>
+              <h1>
+                {isMileage
+                  ? "Mileage reimbursement"
+                  : snapshot.portalVersion === "expense.v2"
+                    ? "Add expense"
+                    : "New expense"}
+              </h1>
+              <p>
+                {isMileage ? "Route, policy, and reimbursement" : "Receipt details and allocation"}
+              </p>
             </div>
             <div className="portal-heading-actions">
               {snapshot.portalVersion === "expense.v2" && <AddExpenseButton />}
               <button
                 className="portal-version"
-                disabled={snapshot.portalVersion === "expense.v2"}
+                disabled={snapshot.portalVersion.endsWith(".v2")}
                 onClick={() =>
                   void run("portal_upgrade_ui", {
                     type: "ChangePortalVersion",
-                    version: "expense.v2",
+                    version: isMileage ? "mileage.v2" : "expense.v2",
                   })
                 }
               >
                 <RefreshCcw size={14} />{" "}
-                {snapshot.portalVersion === "expense.v2"
-                  ? "Portal v2 active"
-                  : "Simulate Portal v2"}
+                {snapshot.portalVersion.endsWith(".v2") ? "Portal v2 active" : "Simulate Portal v2"}
               </button>
             </div>
           </div>
 
-          <div className="receipt-banner">
-            <div className="receipt-icon">
-              <Receipt size={21} />
+          {isMileage ? (
+            <div className="receipt-banner mileage-banner">
+              <div className="receipt-icon">
+                <Activity size={21} />
+              </div>
+              <div>
+                <span>ON-DEMAND TASK</span>
+                <strong>
+                  {DEMO_MILEAGE.origin} → {DEMO_MILEAGE.destination}
+                </strong>
+                <small>
+                  {DEMO_MILEAGE.distanceMiles} miles · $
+                  {(DEMO_MILEAGE.distanceMiles * DEMO_MILEAGE.ratePerMile).toFixed(2)} estimated
+                </small>
+              </div>
+              <div className="receipt-confidence">
+                <span>LIVE</span>
+                <small>manifest plan</small>
+              </div>
             </div>
-            <div>
-              <span>DEMO RECEIPT</span>
-              <strong>{DEMO_RECEIPT.merchant}</strong>
-              <small>
-                {DEMO_RECEIPT.displayDate.replace(", 2026", "")} · Client dinner · $
-                {DEMO_RECEIPT.amount.toFixed(2)}
-              </small>
+          ) : (
+            <div className="receipt-banner">
+              <div className="receipt-icon">
+                <Receipt size={21} />
+              </div>
+              <div>
+                <span>DEMO RECEIPT</span>
+                <strong>{DEMO_RECEIPT.merchant}</strong>
+                <small>
+                  {DEMO_RECEIPT.displayDate.replace(", 2026", "")} · Client dinner · $
+                  {DEMO_RECEIPT.amount.toFixed(2)}
+                </small>
+              </div>
+              <div className="receipt-confidence">
+                <span>98%</span>
+                <small>read confidence</small>
+              </div>
             </div>
-            <div className="receipt-confidence">
-              <span>98%</span>
-              <small>read confidence</small>
-            </div>
-          </div>
+          )}
 
-          <ExpenseForm snapshot={snapshot} />
+          {isMileage ? <MileageForm snapshot={snapshot} /> : <ExpenseForm snapshot={snapshot} />}
         </section>
 
         <aside className="journey-dock">
@@ -445,23 +476,35 @@ function JourneyStart({
       <div className="source-toggle">
         <button
           className={source === "recorded" ? "active" : ""}
-          onClick={() => setSource("recorded")}
+          onClick={() => {
+            setSource("recorded");
+            setGoal(DEFAULT_JOURNEY_GOAL);
+          }}
         >
           <History size={14} /> Recorded guide
         </button>
         <button
           className={source === "on-demand" ? "active" : ""}
-          onClick={() => setSource("on-demand")}
+          onClick={() => {
+            setSource("on-demand");
+            setGoal(DEFAULT_MILEAGE_GOAL);
+          }}
         >
           <WandSparkles size={14} /> On demand
         </button>
       </div>
-      <label>
+      <label htmlFor="journey-task">
         <span className="task-label">
           <span>Your task</span>
           <VoiceTaskButton onTranscript={setGoal} />
         </span>
-        <textarea value={goal} onChange={(event) => setGoal(event.target.value)} maxLength={240} />
+        <textarea
+          id="journey-task"
+          aria-label="Your task"
+          value={goal}
+          onChange={(event) => setGoal(event.target.value)}
+          maxLength={240}
+        />
       </label>
       {source === "recorded" ? (
         <div className="guide-match">
@@ -546,9 +589,14 @@ function JourneyControl({
           <Check size={25} />
         </div>
         <span>VERIFIED COMPLETION</span>
-        <h2>{snapshot.expense.expenseId}</h2>
+        <h2>
+          {snapshot.portalVersion.startsWith("mileage.")
+            ? snapshot.mileage.reimbursementId
+            : snapshot.expense.expenseId}
+        </h2>
         <p>
-          The expense is submitted and the action trail agrees with revision {snapshot.revision}.
+          The {snapshot.portalVersion.startsWith("mileage.") ? "reimbursement" : "expense"} is
+          submitted and the action trail agrees with revision {snapshot.revision}.
         </p>
         <div>
           <ShieldCheck size={14} /> History verified
@@ -730,6 +778,46 @@ function HumanStepAction({
       label: "Prepare for my review",
       command: { type: "PrepareExpenseSubmission" },
     },
+    "mileage.origin": {
+      label: `Use ${DEMO_MILEAGE.origin}`,
+      command: { type: "UpdateMileageDraft", field: "origin", value: DEMO_MILEAGE.origin },
+    },
+    "mileage.destination": {
+      label: `Use ${DEMO_MILEAGE.destination}`,
+      command: {
+        type: "UpdateMileageDraft",
+        field: "destination",
+        value: DEMO_MILEAGE.destination,
+      },
+    },
+    "mileage.distance": {
+      label: `Use ${DEMO_MILEAGE.distanceMiles} miles`,
+      command: {
+        type: "UpdateMileageDraft",
+        field: "distanceMiles",
+        value: DEMO_MILEAGE.distanceMiles,
+      },
+    },
+    "mileage.date": {
+      label: `Use ${DEMO_MILEAGE.displayDate}`,
+      command: { type: "UpdateMileageDraft", field: "tripDate", value: DEMO_MILEAGE.tripDate },
+    },
+    "mileage.purpose": {
+      label: "Use customer workshop purpose",
+      command: { type: "UpdateMileageDraft", field: "purpose", value: DEMO_MILEAGE.purpose },
+    },
+    "mileage.vehicleType": {
+      label: `Use ${DEMO_MILEAGE.vehicleType}`,
+      command: {
+        type: "UpdateMileageDraft",
+        field: "vehicleType",
+        value: DEMO_MILEAGE.vehicleType,
+      },
+    },
+    "mileage.prepare": {
+      label: "Prepare mileage for review",
+      command: { type: "PrepareMileageSubmission" },
+    },
   };
   const action = actions[step.capabilityId];
   if (!action) return null;
@@ -752,6 +840,7 @@ function Confirmation({
   run: (name: string, command: any) => Promise<any>;
 }) {
   const summary = snapshot.pendingConfirmation!;
+  const mileage = summary.kind === "mileage";
   return (
     <div className="confirmation-card">
       <div className="human-boundary">
@@ -759,37 +848,62 @@ function Confirmation({
         <span>HUMAN-ONLY BOUNDARY</span>
       </div>
       <h2>Review the consequence.</h2>
-      <p>The agent prepared this draft. It cannot submit it.</p>
+      <p>The agent prepared this {mileage ? "reimbursement" : "draft"}. It cannot submit it.</p>
       <dl>
-        <div>
-          <dt>Merchant</dt>
-          <dd>{summary.merchant}</dd>
-        </div>
-        <div>
-          <dt>Amount</dt>
-          <dd>${summary.amount.toFixed(2)}</dd>
-        </div>
-        <div>
-          <dt>Project</dt>
-          <dd>{summary.project}</dd>
-        </div>
-        <div>
-          <dt>Category</dt>
-          <dd>{summary.category}</dd>
-        </div>
+        {mileage ? (
+          <>
+            <div>
+              <dt>Route</dt>
+              <dd>
+                {summary.origin} → {summary.destination}
+              </dd>
+            </div>
+            <div>
+              <dt>Distance</dt>
+              <dd>{summary.distanceMiles} miles</dd>
+            </div>
+            <div>
+              <dt>Rate</dt>
+              <dd>${DEMO_MILEAGE.ratePerMile.toFixed(2)} / mile</dd>
+            </div>
+            <div>
+              <dt>Reimbursement</dt>
+              <dd>${summary.reimbursementAmount?.toFixed(2)}</dd>
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <dt>Merchant</dt>
+              <dd>{summary.merchant}</dd>
+            </div>
+            <div>
+              <dt>Amount</dt>
+              <dd>${summary.amount?.toFixed(2)}</dd>
+            </div>
+            <div>
+              <dt>Project</dt>
+              <dd>{summary.project}</dd>
+            </div>
+            <div>
+              <dt>Category</dt>
+              <dd>{summary.category}</dd>
+            </div>
+          </>
+        )}
       </dl>
       <button
-        ref={useAnchorRef<HTMLButtonElement>("expense.confirm")}
+        ref={useAnchorRef<HTMLButtonElement>(mileage ? "mileage.confirm" : "expense.confirm")}
         className="button danger full"
         onClick={() =>
-          void run("confirm_expense_ui", {
-            type: "ConfirmExpenseSubmission",
+          void run(mileage ? "confirm_mileage_ui" : "confirm_expense_ui", {
+            type: mileage ? "ConfirmMileageSubmission" : "ConfirmExpenseSubmission",
             challenge: summary.challenge,
             userActivated: navigator.userActivation?.isActive ?? true,
           })
         }
       >
-        <ShieldCheck size={15} /> Confirm and submit expense
+        <ShieldCheck size={15} /> Confirm and submit {mileage ? "reimbursement" : "expense"}
       </button>
       <small>
         One-time challenge · expires{" "}
@@ -1132,6 +1246,94 @@ function ExpenseForm({ snapshot }: { snapshot: JourneySnapshot }) {
           <span>
             <b>Submission stays human-controlled</b>
             <small>The agent may prepare this draft but cannot finalize it.</small>
+          </span>
+        </div>
+        <ChevronRight size={16} />
+      </div>
+    </div>
+  );
+}
+
+function MileageForm({ snapshot }: { snapshot: JourneySnapshot }) {
+  const current = snapshot.steps.find((step) => step.status === "current")?.capabilityId;
+  const mileage = snapshot.mileage;
+  return (
+    <div className="expense-form mileage-form">
+      <div className="form-section-title">
+        <span>01</span>
+        <div>
+          <b>Route</b>
+          <small>A separate on-demand workflow compiled from live mileage capabilities</small>
+        </div>
+      </div>
+      <div className="form-grid">
+        <FieldShell
+          anchor="mileage.origin"
+          label="Starting point"
+          value={mileage.origin}
+          hint="Required"
+          active={current === "mileage.origin"}
+        />
+        <FieldShell
+          anchor="mileage.destination"
+          label="Destination"
+          value={mileage.destination}
+          hint="Required"
+          active={current === "mileage.destination"}
+        />
+        <FieldShell
+          anchor={
+            snapshot.portalVersion === "mileage.v2" ? "mileage.routeDistance" : "mileage.distance"
+          }
+          label="Distance"
+          value={mileage.distanceMiles ? `${mileage.distanceMiles} miles` : ""}
+          hint="0.1–1,000 miles"
+          active={current === "mileage.distance"}
+        />
+        <FieldShell
+          anchor="mileage.date"
+          label="Trip date"
+          value={mileage.tripDate ? DEMO_MILEAGE.displayDate : ""}
+          hint="Required"
+          active={current === "mileage.date"}
+        />
+      </div>
+      <div className="form-divider" />
+      <div className="form-section-title">
+        <span>02</span>
+        <div>
+          <b>Policy details</b>
+          <small>Explain the trip before reimbursement is calculated</small>
+        </div>
+      </div>
+      <div className="form-grid">
+        <div className="full-field">
+          <FieldShell
+            anchor="mileage.purpose"
+            label="Business purpose"
+            value={mileage.purpose}
+            hint="Required"
+            active={current === "mileage.purpose"}
+          />
+        </div>
+        {snapshot.portalVersion === "mileage.v2" && (
+          <div className="full-field">
+            <FieldShell
+              anchor="mileage.vehicleType"
+              label="Vehicle type"
+              value={mileage.vehicleType}
+              hint="New in Portal v2 · required"
+              active={current === "mileage.vehicleType"}
+            />
+          </div>
+        )}
+      </div>
+      <div ref={useAnchorRef<HTMLDivElement>("mileage.review")} className="form-review">
+        <div>
+          <ShieldCheck size={17} />
+          <span>
+            <b>Reimbursement stays human-controlled</b>
+            <small>The agent may calculate the draft but cannot submit it.</small>
           </span>
         </div>
         <ChevronRight size={16} />

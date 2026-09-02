@@ -24,6 +24,18 @@ export const DEMO_PROJECTS = ["Project Atlas", "Internal", "Unallocated"] as con
 export const DEMO_CATEGORIES = ["Client meal", "Travel", "Office"] as const;
 export const DEMO_BUSINESS_PURPOSE = "Client dinner after Project Atlas workshop";
 export const DEFAULT_JOURNEY_GOAL = "Submit my $86 client dinner from yesterday to Project Atlas";
+export const DEFAULT_MILEAGE_GOAL =
+  "Create an 18-mile mileage reimbursement from the office to the airport";
+export const DEMO_MILEAGE = {
+  origin: "Acme HQ",
+  destination: "JFK Airport",
+  distanceMiles: 18,
+  tripDate: "2026-09-01",
+  displayDate: "Sep 1, 2026",
+  purpose: "Airport trip for customer workshop",
+  vehicleType: "Personal car",
+  ratePerMile: 0.67,
+} as const;
 
 export interface DemoAgencyPolicy extends AgencyPolicy {
   color: "coral" | "amber" | "mint";

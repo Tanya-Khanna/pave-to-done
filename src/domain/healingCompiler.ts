@@ -37,10 +37,29 @@ function resolveCapability(
   );
 }
 
-function fieldSatisfied(snapshot: JourneySnapshot, field?: keyof JourneySnapshot["expense"]) {
+function expenseFieldSatisfied(
+  snapshot: JourneySnapshot,
+  field?: keyof JourneySnapshot["expense"],
+) {
   if (!field) return false;
   const value = snapshot.expense[field];
   return typeof value === "number" ? Number.isFinite(value) && value > 0 : Boolean(value);
+}
+
+function mileageFieldSatisfied(
+  snapshot: JourneySnapshot,
+  field?: keyof JourneySnapshot["mileage"],
+) {
+  if (!field) return false;
+  const value = snapshot.mileage[field];
+  return typeof value === "number" ? Number.isFinite(value) && value > 0 : Boolean(value);
+}
+
+function outcomeSatisfied(snapshot: JourneySnapshot, capability: CapabilityDefinition) {
+  return (
+    expenseFieldSatisfied(snapshot, capability.requiredField) ||
+    mileageFieldSatisfied(snapshot, capability.mileageRequiredField)
+  );
 }
 
 function stepSatisfied(
@@ -48,10 +67,18 @@ function stepSatisfied(
   step: JourneyStep,
   capability: CapabilityDefinition,
 ) {
-  if (fieldSatisfied(snapshot, capability.requiredField ?? step.requiredField)) return true;
+  if (
+    outcomeSatisfied(snapshot, capability) ||
+    expenseFieldSatisfied(snapshot, step.requiredField) ||
+    mileageFieldSatisfied(snapshot, step.mileageRequiredField)
+  )
+    return true;
   if (capability.id === "expense.prepare")
     return ["prepared", "submitted"].includes(snapshot.expense.status);
   if (capability.id === "expense.submit") return snapshot.expense.status === "submitted";
+  if (capability.id === "mileage.prepare")
+    return ["prepared", "submitted"].includes(snapshot.mileage.status);
+  if (capability.id === "mileage.submit") return snapshot.mileage.status === "submitted";
   return step.status === "complete";
 }
 
@@ -84,7 +111,7 @@ export function compileHealing(input: {
   sourceManifest: CapabilityManifest;
   currentManifest: CapabilityManifest;
   mode?: AgencyMode;
-  requirementDescriptions?: Partial<Record<keyof JourneySnapshot["expense"], string>>;
+  requirementDescriptions?: Record<string, string>;
 }): HealingAssessment {
   const { snapshot, sourceManifest, currentManifest } = input;
   const mode = input.mode ?? snapshot.agencyMode;
@@ -118,13 +145,22 @@ export function compileHealing(input: {
       disposition = "blocked";
       reason = `${step.capabilityId} would expand agent authority.`;
       blockedReasons.push(reason);
-    } else if (source.requiredField !== current.requiredField) {
+    } else if (
+      source.requiredField !== current.requiredField ||
+      source.mileageRequiredField !== current.mileageRequiredField
+    ) {
       disposition = "repair_required";
       reason = `${step.capabilityId} changed its required outcome.`;
       materialChanges.push({
         capabilityId: current.id,
         reason,
-        requiredField: String(current.requiredField ?? source.requiredField ?? "unknown"),
+        requiredField: String(
+          current.requiredField ??
+            current.mileageRequiredField ??
+            source.requiredField ??
+            source.mileageRequiredField ??
+            "unknown",
+        ),
       });
     } else if (source.id !== current.id || source.anchorKey !== current.anchorKey) {
       disposition = "remapped";
@@ -165,6 +201,7 @@ export function compileHealing(input: {
         risk: current.risk,
         anchorKey: current.anchorKey,
         requiredField: current.requiredField,
+        mileageRequiredField: current.mileageRequiredField,
       });
     }
   }
@@ -175,8 +212,9 @@ export function compileHealing(input: {
       .filter((value): value is string => Boolean(value)),
   );
   for (const capability of currentManifest.capabilities) {
-    if (!capability.requiredField || resolvedTargetIds.has(capability.id)) continue;
-    const satisfied = fieldSatisfied(snapshot, capability.requiredField);
+    const requiredField = capability.requiredField ?? capability.mileageRequiredField;
+    if (!requiredField || resolvedTargetIds.has(capability.id)) continue;
+    const satisfied = outcomeSatisfied(snapshot, capability);
     const disposition: HealingDisposition = satisfied ? "compatible" : "repair_required";
     const reason = satisfied
       ? `${capability.id} is new, but its required outcome is already satisfied.`
@@ -198,7 +236,7 @@ export function compileHealing(input: {
     materialChanges.push({
       capabilityId: capability.id,
       reason,
-      requiredField: capability.requiredField,
+      requiredField,
     });
     const targetOrder = currentManifest.capabilities.findIndex((item) => item.id === capability.id);
     const insertion = proposedSteps.findIndex((step) => {
@@ -211,13 +249,13 @@ export function compileHealing(input: {
       id: `step-${capability.id.replaceAll(".", "-")}`,
       capabilityId: capability.id,
       title: capability.title,
-      description:
-        input.requirementDescriptions?.[capability.requiredField] ?? capability.description,
+      description: input.requirementDescriptions?.[requiredField] ?? capability.description,
       status: "pending",
       assignedActor: assignPermittedActor(Math.max(0, insertion), capability, mode),
       risk: capability.risk,
       anchorKey: capability.anchorKey,
       requiredField: capability.requiredField,
+      mileageRequiredField: capability.mileageRequiredField,
     });
   }
 

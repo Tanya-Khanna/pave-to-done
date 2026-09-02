@@ -103,6 +103,7 @@ describe("WebMCP registration lifecycle", () => {
 
     const base = createInitialSnapshot("session-2");
     const steps = compileSteps("for", "expense.v1");
+    const mileageSteps = compileSteps("for", "mileage.v1");
     const active = {
       ...base,
       source: { kind: "on-demand" as const, goal: "Submit the verified client dinner" },
@@ -143,6 +144,25 @@ describe("WebMCP registration lifecycle", () => {
           entries: [],
         },
       },
+      {
+        ...active,
+        source: { kind: "on-demand" as const, goal: "Create an 18-mile mileage reimbursement" },
+        goal: "Create an 18-mile mileage reimbursement",
+        portalVersion: "mileage.v1" as const,
+        manifestVersion: "mileage.v1" as const,
+        steps: mileageSteps,
+      },
+      {
+        ...active,
+        source: { kind: "on-demand" as const, goal: "Create an 18-mile mileage reimbursement" },
+        goal: "Create an 18-mile mileage reimbursement",
+        portalVersion: "mileage.v1" as const,
+        manifestVersion: "mileage.v1" as const,
+        steps: mileageSteps.map((step) => ({
+          ...step,
+          status: step.capabilityId === "mileage.prepare" ? "current" : "complete",
+        })),
+      },
     ];
 
     await waitFor(() =>
@@ -164,11 +184,13 @@ describe("WebMCP registration lifecycle", () => {
         "list_capabilities",
         "list_guides",
         "prepare_expense_submission",
+        "prepare_mileage_submission",
         "propose_journey_repair",
         "save_guide_draft",
         "set_agency_mode",
         "show_guidance",
         "update_expense_draft",
+        "update_mileage_draft",
       ].sort(),
     );
     expect(byName.has("confirm_expense_submission")).toBe(false);

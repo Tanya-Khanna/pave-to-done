@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const boundedText = z.string().trim().min(1).max(240);
 const agencyMode = z.enum(["show", "with", "for"]);
-const portalVersion = z.enum(["expense.v1", "expense.v2"]);
+const portalVersion = z.enum(["expense.v1", "expense.v2", "mileage.v1", "mileage.v2"]);
 
 export const journeySourceSchema = z.discriminatedUnion("kind", [
   z
@@ -40,7 +40,22 @@ export const journeyCommandSchema = z.discriminatedUnion("type", [
       value: z.union([boundedText, z.number().positive().max(10000)]),
     })
     .strict(),
+  z
+    .object({
+      type: z.literal("UpdateMileageDraft"),
+      field: z.enum([
+        "origin",
+        "destination",
+        "distanceMiles",
+        "tripDate",
+        "purpose",
+        "vehicleType",
+      ]),
+      value: z.union([boundedText, z.number().min(0.1).max(1000)]),
+    })
+    .strict(),
   z.object({ type: z.literal("PrepareExpenseSubmission") }).strict(),
+  z.object({ type: z.literal("PrepareMileageSubmission") }).strict(),
   z
     .object({
       type: z.literal("ConfirmExpenseSubmission"),
@@ -48,8 +63,21 @@ export const journeyCommandSchema = z.discriminatedUnion("type", [
       userActivated: z.boolean(),
     })
     .strict(),
+  z
+    .object({
+      type: z.literal("ConfirmMileageSubmission"),
+      challenge: z.string().min(16).max(160),
+      userActivated: z.boolean(),
+    })
+    .strict(),
   z.object({ type: z.literal("ChangePortalVersion"), version: portalVersion }).strict(),
-  z.object({ type: z.literal("ProposeRepair"), businessPurpose: boundedText }).strict(),
+  z
+    .object({
+      type: z.literal("ProposeRepair"),
+      businessPurpose: boundedText.optional(),
+      vehicleType: boundedText.optional(),
+    })
+    .strict(),
   z.object({ type: z.literal("ApproveRepair"), repairId: z.string().min(8).max(80) }).strict(),
   z.object({ type: z.literal("RejectRepair"), repairId: z.string().min(8).max(80) }).strict(),
   z

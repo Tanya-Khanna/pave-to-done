@@ -7,6 +7,7 @@ import type {
   Guide,
   JourneySnapshot,
   JourneyStep,
+  MileageField,
   RecordingEntry,
 } from "./types";
 
@@ -26,7 +27,11 @@ function observedState(snapshot: JourneySnapshot, capabilityId: string) {
   const capability = getManifest(snapshot.portalVersion).capabilities.find(
     (candidate) => candidate.id === capabilityId,
   );
-  const value = capability?.requiredField ? snapshot.expense[capability.requiredField] : undefined;
+  const value = capability?.requiredField
+    ? snapshot.expense[capability.requiredField]
+    : capability?.mileageRequiredField
+      ? snapshot.mileage[capability.mileageRequiredField]
+      : undefined;
   const outcomeSatisfied =
     typeof value === "number" ? Number.isFinite(value) && value > 0 : Boolean(value);
   return {
@@ -36,7 +41,9 @@ function observedState(snapshot: JourneySnapshot, capabilityId: string) {
         : capabilityId === "expense.submit"
           ? snapshot.expense.status === "submitted"
           : outcomeSatisfied,
-    expenseStatus: snapshot.expense.status,
+    workflowStatus: capabilityId.startsWith("mileage.")
+      ? snapshot.mileage.status
+      : snapshot.expense.status,
     stepComplete: snapshot.steps.some(
       (step) => step.capabilityId === capabilityId && step.status === "complete",
     ),
@@ -58,20 +65,25 @@ function recordingEntry(
           ? "expense.prepare"
           : event.type === "ExpenseSubmitted"
             ? "expense.submit"
-            : "";
+            : event.type === "MileageFieldUpdated"
+              ? String(event.safePayload.capabilityId ?? "")
+              : event.type === "MileageSubmissionPrepared"
+                ? "mileage.prepare"
+                : event.type === "MileageSubmitted"
+                  ? "mileage.submit"
+                  : "";
   if (!capabilityId) return null;
   const capability = getManifest(after.portalVersion).capabilities.find(
     (candidate) => candidate.id === capabilityId,
   );
   if (!capability) return null;
-  const redactedInput =
-    event.type === "ExpenseFieldUpdated"
-      ? { field: String(event.safePayload.field), value: "[REDACTED]" }
-      : event.type === "ExpenseSubmissionPrepared"
-        ? { confirmation: "[REDACTED]" }
-        : event.type === "ExpenseSubmitted"
-          ? { result: "[REDACTED]" }
-          : { receiptFacts: "[REDACTED]" };
+  const redactedInput = ["ExpenseFieldUpdated", "MileageFieldUpdated"].includes(event.type)
+    ? { field: String(event.safePayload.field), value: "[REDACTED]" }
+    : ["ExpenseSubmissionPrepared", "MileageSubmissionPrepared"].includes(event.type)
+      ? { confirmation: "[REDACTED]" }
+      : ["ExpenseSubmitted", "MileageSubmitted"].includes(event.type)
+        ? { result: "[REDACTED]" }
+        : { receiptFacts: "[REDACTED]" };
   return {
     sequence: before.recording.entries.length + 1,
     capabilityId,
@@ -107,6 +119,8 @@ export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySn
         source: event.safePayload.source as JourneySnapshot["source"],
         goal: String(event.safePayload.goal),
         agencyMode: event.safePayload.mode as JourneySnapshot["agencyMode"],
+        portalVersion: event.safePayload.portalVersion as JourneySnapshot["portalVersion"],
+        capabilityManifestVersion: String(event.safePayload.manifestVersion),
         status: "active",
         pausedFrom: undefined,
         steps: event.safePayload.steps as JourneyStep[],
@@ -123,6 +137,16 @@ export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySn
           businessPurpose: "",
           status: "empty",
           expenseId: undefined,
+        },
+        mileage: {
+          origin: "",
+          destination: "",
+          distanceMiles: null,
+          tripDate: "",
+          purpose: "",
+          vehicleType: "",
+          status: "empty",
+          reimbursementId: undefined,
         },
       };
       break;
@@ -190,6 +214,7 @@ export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySn
         expense: { ...next.expense, status: "prepared" },
         steps: advance(next.steps, ["expense.prepare"]),
         pendingConfirmation: {
+          kind: "expense",
           challenge: String(event.safePayload.challenge),
           expiresAt: String(event.safePayload.expiresAt),
           amount: Number(event.safePayload.amount),
@@ -197,6 +222,46 @@ export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySn
           category: String(event.safePayload.category),
           merchant: String(event.safePayload.merchant),
         },
+      };
+      break;
+    case "MileageFieldUpdated": {
+      const field = event.safePayload.field as MileageField;
+      next = {
+        ...next,
+        status: "active",
+        mileage: { ...next.mileage, [field]: event.safePayload.value, status: "draft" },
+        steps: advance(next.steps, [String(event.safePayload.capabilityId)]),
+      };
+      break;
+    }
+    case "MileageSubmissionPrepared":
+      next = {
+        ...next,
+        status: "awaiting_confirmation",
+        mileage: { ...next.mileage, status: "prepared" },
+        steps: advance(next.steps, ["mileage.prepare"]),
+        pendingConfirmation: {
+          kind: "mileage",
+          challenge: String(event.safePayload.challenge),
+          expiresAt: String(event.safePayload.expiresAt),
+          distanceMiles: Number(event.safePayload.distanceMiles),
+          origin: String(event.safePayload.origin),
+          destination: String(event.safePayload.destination),
+          reimbursementAmount: Number(event.safePayload.reimbursementAmount),
+        },
+      };
+      break;
+    case "MileageSubmitted":
+      next = {
+        ...next,
+        status: "completed",
+        mileage: {
+          ...next.mileage,
+          status: "submitted",
+          reimbursementId: String(event.safePayload.reimbursementId),
+        },
+        steps: next.steps.map((step) => ({ ...step, status: "complete" })),
+        pendingConfirmation: undefined,
       };
       break;
     case "ExpenseSubmitted":

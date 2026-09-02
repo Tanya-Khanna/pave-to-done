@@ -1,7 +1,7 @@
 export type AgencyMode = "show" | "with" | "for";
 export type ActorKind = "human" | "agent";
 export type ActorSurface = "ui" | "webmcp";
-export type PortalVersion = "expense.v1" | "expense.v2";
+export type PortalVersion = "expense.v1" | "expense.v2" | "mileage.v1" | "mileage.v2";
 export type CapabilityRisk = "read" | "guidance" | "reversible" | "sensitive";
 export type JourneyStatus =
   | "idle"
@@ -32,6 +32,17 @@ export interface ExpenseProjection {
   expenseId?: string;
 }
 
+export interface MileageProjection {
+  origin: string;
+  destination: string;
+  distanceMiles: number | null;
+  tripDate: string;
+  purpose: string;
+  vehicleType: string;
+  status: "empty" | "draft" | "prepared" | "submitted";
+  reimbursementId?: string;
+}
+
 export interface JourneyStep {
   id: string;
   capabilityId: string;
@@ -42,6 +53,7 @@ export interface JourneyStep {
   risk: CapabilityRisk;
   anchorKey?: string;
   requiredField?: keyof ExpenseProjection;
+  mileageRequiredField?: keyof MileageProjection;
 }
 
 export interface GuideStep {
@@ -113,12 +125,17 @@ export interface HealingAssessment {
 }
 
 export interface ConfirmationSummary {
+  kind: "expense" | "mileage";
   challenge: string;
   expiresAt: string;
-  amount: number;
-  project: string;
-  category: string;
-  merchant: string;
+  amount?: number;
+  project?: string;
+  category?: string;
+  merchant?: string;
+  distanceMiles?: number;
+  origin?: string;
+  destination?: string;
+  reimbursementAmount?: number;
 }
 
 export interface RecordingEntry {
@@ -166,6 +183,7 @@ export interface CapabilityDefinition {
   risk: CapabilityRisk;
   allowedActors: readonly ActorKind[];
   requiredField?: keyof ExpenseProjection;
+  mileageRequiredField?: keyof MileageProjection;
   anchorKey?: string;
   aliases?: string[];
 }
@@ -208,6 +226,7 @@ export interface JourneySnapshot {
   pausedFrom?: "active" | "awaiting_user";
   steps: JourneyStep[];
   expense: ExpenseProjection;
+  mileage: MileageProjection;
   pendingRepair?: Repair;
   healingAssessment?: HealingAssessment;
   blockedReason?: string;
@@ -220,6 +239,8 @@ export interface JourneySnapshot {
 }
 
 export type ExpenseField = "date" | "amount" | "project" | "category" | "businessPurpose";
+export type MileageField =
+  "origin" | "destination" | "distanceMiles" | "tripDate" | "purpose" | "vehicleType";
 
 export type JourneyCommand =
   | { type: "StartJourney"; source: JourneySource; mode?: AgencyMode }
@@ -228,10 +249,13 @@ export type JourneyCommand =
   | { type: "ShowGuidance" }
   | { type: "CreateExpenseDraft"; date: string; amount: number }
   | { type: "UpdateExpenseDraft"; field: ExpenseField; value: string | number }
+  | { type: "UpdateMileageDraft"; field: MileageField; value: string | number }
   | { type: "PrepareExpenseSubmission" }
+  | { type: "PrepareMileageSubmission" }
   | { type: "ConfirmExpenseSubmission"; challenge: string; userActivated: boolean }
+  | { type: "ConfirmMileageSubmission"; challenge: string; userActivated: boolean }
   | { type: "ChangePortalVersion"; version: PortalVersion }
-  | { type: "ProposeRepair"; businessPurpose: string }
+  | { type: "ProposeRepair"; businessPurpose?: string; vehicleType?: string }
   | { type: "ApproveRepair"; repairId: string }
   | { type: "RejectRepair"; repairId: string }
   | { type: "StartRecording"; narration?: string }

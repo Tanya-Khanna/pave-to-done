@@ -24,7 +24,7 @@ export function nextControlBoundary(snapshot: JourneySnapshot): NextControlBound
     return {
       actor: "human",
       action: "review_and_confirm_in_ui",
-      reason: "Final expense submission is sensitive and human-only.",
+      reason: "Final submission is sensitive and human-only.",
     };
   if (snapshot.status === "repair_required")
     return snapshot.pendingRepair
@@ -70,6 +70,17 @@ function safeSummary(snapshot: JourneySnapshot) {
       businessPurpose: snapshot.expense.businessPurpose || null,
       status: snapshot.expense.status,
     },
+    mileage: snapshot.portalVersion.startsWith("mileage.")
+      ? {
+          origin: snapshot.mileage.origin || null,
+          destination: snapshot.mileage.destination || null,
+          distanceMiles: snapshot.mileage.distanceMiles,
+          tripDate: snapshot.mileage.tripDate || null,
+          purpose: snapshot.mileage.purpose || null,
+          vehicleType: snapshot.mileage.vehicleType || null,
+          status: snapshot.mileage.status,
+        }
+      : undefined,
     currentStep: step
       ? {
           capabilityId: step.capabilityId,
