@@ -14,13 +14,14 @@
 
 ## Current progress
 
-**Active step:** Step 5 — Three agency modes (with Chrome verification pending in Step 1 and mileage bounds deferred from Step 4 to Step 9)
+**Active step:** Step 6 — Guidance experience (with Chrome verification pending in Step 1 and mileage bounds deferred from Step 4 to Step 9)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
 **Completed in Step 4:** 19 of 20 items
+**Completed in Step 5:** 12 of 12 items
 
-**Current deployment:** Cloudflare version `6acae43e-cd32-46b9-a9f4-b09589d6aab7` from verified GitHub commit `c4b9129` at `https://pave-to-done.north-raincoat.workers.dev`. Live verification passed health, persistence, exactly-once handling, stale-revision rejection, event history, security headers, top-level delivery, WebMCP discovery, and the uniform result contract.
+**Current deployment:** Cloudflare version `10b8dae2-2b45-4290-a8d0-e9b97372443f` from verified GitHub commit `a14ec85` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33595519023`, the live protocol verifier, and all three deployed agency-mode browser tests passed.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -74,18 +75,18 @@
 
 ## 5. Three agency modes
 
-- [ ] Add a real pause control to the guide dock.
-- [ ] Verify Show Me from reset.
-- [ ] Verify Do It With Me from reset.
-- [ ] Verify Do It For Me from reset.
-- [ ] Verify Show Me denies every agent domain mutation.
-- [ ] Verify With Me only permits the current assigned reversible step.
-- [ ] Verify For Me permits reversible agent actions and denies sensitive actions.
-- [ ] Test all six directed mode changes between the three modes.
-- [ ] Confirm mode changes preserve completed work and valid draft state.
-- [ ] Confirm out-of-order steps cannot mutate state.
-- [ ] Confirm agent work is blocked during repair and human confirmation.
-- [ ] Confirm forbidden mutations return grounded errors explaining the rejection and next allowed action.
+- [x] Add a real pause control to the guide dock. — Evidence: the dock has distinct Pause/Resume controls backed by `SetJourneyPaused`, persisted `JourneyPaused`/`JourneyResumed` events, and a paused control boundary; local and deployed Playwright tests prove the UI preserves state.
+- [x] Verify Show Me from reset. — Evidence: the parameterized agency-mode suite completes the expense from a reset Show Me session with every reversible action performed by the person and final confirmation remaining human-only.
+- [x] Verify Do It With Me from reset. — Evidence: the same suite completes a reset With Me session with the agent handling receipt facts, the person making the project judgment, the agent resuming reversible work, and the person confirming.
+- [x] Verify Do It For Me from reset. — Evidence: the same suite completes a reset For Me session with the agent executing all reversible steps and the person executing the sensitive consequence.
+- [x] Verify Show Me denies every agent domain mutation. — Evidence: `src/test/agencyModes.test.ts` attempts each expense mutation at its current Show Me step plus final submission, asserts the correct policy rejection, and proves the snapshot is unchanged.
+- [x] Verify With Me only permits the current assigned reversible step. — Evidence: the suite permits the first agent assignment, denies the agent at the human project judgment, rejects an out-of-order prior field, and permits the newly current agent category step.
+- [x] Verify For Me permits reversible agent actions and denies sensitive actions. — Evidence: the suite lets the agent create, allocate, classify, and prepare the draft, then rejects its final confirmation attempt without altering state.
+- [x] Test all six directed mode changes between the three modes. — Evidence: a table-driven test covers Show→With, Show→For, With→Show, With→For, For→Show, and For→With; the server also rejects agent-requested authority escalation while allowing reduction.
+- [x] Confirm mode changes preserve completed work and valid draft state. — Evidence: every directed-transition case compares the complete expense projection, completed capability set, and current capability before and after the transition; deployed browser verification also preserves the visible date.
+- [x] Confirm out-of-order steps cannot mutate state. — Evidence: the suite attempts `expense.project` while `expense.date` is current, receives a grounded precondition failure, and compares the unchanged projection.
+- [x] Confirm agent work is blocked during repair and human confirmation. — Evidence: focused tests receive `REPAIR_REQUIRED` after Portal v2 changes and `AWAITING_HUMAN` after preparation; dynamic WebMCP registration omits ordinary agent mutation tools in paused, repair, and confirmation states.
+- [x] Confirm forbidden mutations return grounded errors explaining the rejection and next allowed action. — Evidence: policy errors name the capability, active mode, current owner, and required next step; pause and authority-escalation errors explicitly direct the person to the visible Journey dock.
 
 ## 6. Guidance experience
 

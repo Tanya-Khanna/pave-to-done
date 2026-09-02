@@ -24,8 +24,12 @@ test("changing modes preserves completed work", async ({ page }) => {
   await page.goto("/demo");
   await page.getByRole("button", { name: "Start shared journey" }).click();
   await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
-  await page.getByRole("radio", { name: /Do it for me/ }).click();
-  await expect(page.getByText("Aug 31, 2026")).toBeVisible();
+  await expect(
+    page.locator(".expense-field").filter({ hasText: "Expense date" }).getByText("Aug 31, 2026"),
+  ).toBeVisible();
+  const delegatedMode = page.getByRole("radio", { name: /Do it for me/ });
+  await delegatedMode.click();
+  await expect(delegatedMode).toBeChecked();
   await expect(page.getByText("Do it for me", { exact: true })).toBeVisible();
 });
 
