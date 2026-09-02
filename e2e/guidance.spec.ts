@@ -84,12 +84,13 @@ test("coach text communicates ownership and outcome without blocking the human a
 test("the complete Show Me journey can be operated by keyboard with announced state", async ({
   page,
 }) => {
+  await expect(page.locator(".toast")).toHaveCount(0, { timeout: 6_000 });
   // Complete the already-highlighted date step and every subsequent action using keyboard activation.
   const activate = async (name: string) => {
     const button = page.getByRole("button", { name });
     await button.focus();
     await expect(button).toBeFocused();
-    await page.keyboard.press("Enter");
+    await button.press("Space");
   };
 
   await activate("Use Aug 31, 2026");

@@ -14,14 +14,15 @@
 
 ## Current progress
 
-**Active step:** Step 6 — Guidance experience (with Chrome verification pending in Step 1 and mileage bounds deferred from Step 4 to Step 9)
+**Active step:** Step 7 — Self-healing engine (with Chrome verification pending in Step 1 and mileage bounds deferred from Step 4 to Step 9)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
 **Completed in Step 4:** 19 of 20 items
 **Completed in Step 5:** 12 of 12 items
+**Completed in Step 6:** 8 of 8 items
 
-**Current deployment:** Cloudflare version `10b8dae2-2b45-4290-a8d0-e9b97372443f` from verified GitHub commit `a14ec85` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33595519023`, the live protocol verifier, and all three deployed agency-mode browser tests passed.
+**Current deployment:** Cloudflare version `078bd430-1148-4be9-8819-bfbeda9c2430` from verified GitHub commit `e99fb6d` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33596890592`, the live protocol verifier, and all 12 deployed browser tests passed.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -90,14 +91,14 @@
 
 ## 6. Guidance experience
 
-- [ ] Anchor the coach card directly to the relevant semantic target.
-- [ ] Decide whether the optional ghost gesture improves the product; implement it if retained and document the decision either way.
-- [ ] Test the target outline and coach card after scrolling and resizing.
-- [ ] Ensure the coach overlay never blocks the target's click action.
-- [ ] Keep the coach card on-screen at common viewport sizes.
-- [ ] Verify guidance communicates state without relying on color.
-- [ ] Verify keyboard navigation through the full guided flow.
-- [ ] Verify screen-reader labeling through the full guided flow.
+- [x] Anchor the coach card directly to the relevant semantic target. — Evidence: `GuidanceOverlay` resolves the live semantic anchor, outlines its measured bounds, and places a connected coach card on the best available side with the capability's action and reason.
+- [x] Decide whether the optional ghost gesture improves the product; implement it if retained and document the decision either way. — Evidence: `PRD.md` and `IMPLEMENTATION_PLAN.md` document the decision to omit simulated cursor movement because it can falsely imply execution and adds no information beyond the semantic target.
+- [x] Test the target outline and coach card after scrolling and resizing. — Evidence: `e2e/guidance.spec.ts` scrolls the portal, resizes across 1440×900, 1024×720, and 390×844, and polls the spotlight-to-target geometry to sub-two-pixel alignment.
+- [x] Ensure the coach overlay never blocks the target's click action. — Evidence: both spotlight and coach compute to `pointer-events: none`; the browser test activates the instructed human control while guidance is visible and observes the verified next step.
+- [x] Keep the coach card on-screen at common viewport sizes. — Evidence: viewport-aware placement and clamping preserve 12-pixel margins; the browser suite measures every card edge at desktop, tablet, and mobile sizes.
+- [x] Verify guidance communicates state without relying on color. — Evidence: the visible coach explicitly renders `CURRENT STEP`, `You act`/`Agent acts`, the action heading, `Why`, and `Expected`; tests assert all labels as text.
+- [x] Verify keyboard navigation through the full guided flow. — Evidence: the deployed browser suite completes every Show Me action and sensitive confirmation using focused native-button keyboard activation, ending at `VERIFIED COMPLETION`.
+- [x] Verify screen-reader labeling through the full guided flow. — Evidence: the atomic live region announces step count, action, and control owner; the coach is a polite status; the keyboard journey asserts intermediate and final accessible status text including history verification.
 
 ## 7. Self-healing engine
 
