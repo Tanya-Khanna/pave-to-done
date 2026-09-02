@@ -37,4 +37,5 @@ test("reduced motion collapses decorative animations without hiding content", as
     .locator(".route-line")
     .evaluate((node) => getComputedStyle(node).animationDuration);
   expect(parseFloat(duration)).toBeLessThan(0.01);
+  await expect(page.locator(".route-runner")).toBeHidden();
 });
