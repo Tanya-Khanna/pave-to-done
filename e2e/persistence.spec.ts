@@ -57,3 +57,17 @@ test("two tabs sharing a guest session converge after either tab acts", async ({
   await expect(page.getByText("STEP 02 / 06")).toBeVisible();
   await expect(page.getByRole("button", { name: "Use $86.00" })).toBeVisible();
 });
+
+test("reset starts a fresh document so WebMCP registration limits also reset", async ({ page }) => {
+  await page.goto("/demo");
+  await page.getByRole("button", { name: "Start shared journey" }).click();
+  await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
+  await page.getByRole("button", { name: "Reset", exact: true }).click();
+
+  await expect(page.getByRole("button", { name: "Start shared journey" })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming).type,
+    ),
+  ).toBe("reload");
+});

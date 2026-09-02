@@ -149,6 +149,11 @@ function DemoExperience() {
       mode,
     });
 
+  const resetAndReload = async () => {
+    const result = await run("reset_session_ui", { type: "ResetSession" });
+    if (result?.ok) window.location.reload();
+  };
+
   const setAgency = (next: AgencyMode) => {
     setMode(next);
     if (snapshot.source)
@@ -228,10 +233,7 @@ function DemoExperience() {
           <button className="quiet-button" onClick={() => setShowDiagnostics((value) => !value)}>
             <Code2 size={15} /> Diagnostics
           </button>
-          <button
-            className="quiet-button"
-            onClick={() => void run("reset_session_ui", { type: "ResetSession" })}
-          >
+          <button className="quiet-button" onClick={() => void resetAndReload()}>
             <RotateCcw size={15} /> Reset
           </button>
         </div>
