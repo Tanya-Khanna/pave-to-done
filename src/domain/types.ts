@@ -122,13 +122,17 @@ export interface ConfirmationSummary {
 }
 
 export interface RecordingEntry {
+  sequence: number;
   capabilityId: string;
   title: string;
   actor: ActorKind;
   risk: CapabilityRisk;
   redactedInput: Record<string, unknown>;
-  before?: Partial<ExpenseProjection>;
-  after?: Partial<ExpenseProjection>;
+  before: Record<string, string | number | boolean | null>;
+  after: Record<string, string | number | boolean | null>;
+  portalVersion: PortalVersion;
+  manifestVersion: string;
+  anchorKey?: string;
   narration?: string;
 }
 
@@ -139,6 +143,9 @@ export interface RecordingTrace {
   entries: RecordingEntry[];
   draftTitle?: string;
   guideId?: string;
+  draft?: Guide;
+  draftOrigin?: "agent" | "deterministic";
+  publishedGuide?: Guide;
 }
 
 export type RecordingProjection = RecordingTrace;
@@ -229,7 +236,9 @@ export type JourneyCommand =
   | { type: "RejectRepair"; repairId: string }
   | { type: "StartRecording"; narration?: string }
   | { type: "StopRecording" }
-  | { type: "SaveGuideDraft"; title: string; narration?: string }
+  | { type: "UpdateRecordingNarration"; sequence: number; narration: string }
+  | { type: "GenerateGuideDraft"; title?: string }
+  | { type: "SaveGuideDraft"; title: string; narration?: string; steps?: GuideStep[] }
   | { type: "PublishGuide" }
   | { type: "ResetSession" };
 

@@ -1368,6 +1368,14 @@ summary:focus-visible {
   font-size: 8px;
   line-height: 1.45;
 }
+.on-demand-note span,
+.on-demand-note b {
+  display: block;
+}
+.on-demand-note b {
+  color: #b9d0ff;
+  margin-bottom: 3px;
+}
 .dock-start {
   width: 100%;
   margin-top: 12px;
@@ -1381,6 +1389,18 @@ summary:focus-visible {
   font:
     700 8px ui-monospace,
     monospace;
+}
+.journey-source-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--blue);
+  font:
+    700 7px ui-monospace,
+    monospace;
+  letter-spacing: 0.08em;
+  margin-bottom: 9px;
+  text-transform: uppercase;
 }
 .progress-meta strong {
   color: var(--mint);
@@ -1698,11 +1718,12 @@ summary:focus-visible {
   border-top: 1px solid var(--line);
   margin-top: auto;
   padding: 12px 14px;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 8px;
   align-items: center;
 }
-.recording-control > div {
+.recording-control > div:first-child {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -1742,6 +1763,143 @@ summary:focus-visible {
   align-items: center;
   gap: 5px;
   cursor: pointer;
+  padding: 0 8px;
+}
+.recording-control > button {
+  grid-column: 2;
+  grid-row: 1;
+}
+.recording-control button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+.recording-provenance {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font:
+    700 7px ui-monospace,
+    monospace;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.recording-provenance.recording,
+.recording-provenance.review {
+  color: var(--amber);
+}
+.recording-provenance.draft {
+  color: var(--blue);
+}
+.recording-provenance.published {
+  color: var(--mint);
+}
+.recording-draft-actions,
+.recording-review,
+.guide-draft-review {
+  grid-column: 1 / -1;
+}
+.recording-draft-actions {
+  display: grid;
+  gap: 6px;
+}
+.recording-draft-actions button {
+  justify-content: center;
+  width: 100%;
+}
+.recording-review {
+  display: grid;
+  gap: 7px;
+  max-height: 260px;
+  overflow-y: auto;
+}
+.recording-review article {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #0c100f;
+  padding: 8px;
+}
+.recording-entry-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+.recording-entry-heading > span {
+  color: var(--mint);
+  font:
+    700 7px ui-monospace,
+    monospace;
+}
+.recording-state-change {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  color: #8da399;
+  font-size: 6px;
+  margin-top: 7px;
+}
+.recording-review label {
+  display: block;
+  color: var(--muted);
+  font-size: 7px;
+  margin-top: 7px;
+}
+.recording-review label > div {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 4px;
+  margin-top: 4px;
+}
+.recording-review input {
+  min-width: 0;
+  height: 28px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: #080b0a;
+  color: var(--white);
+  font-size: 7px;
+  padding: 0 7px;
+}
+.recording-review article > p {
+  color: #a9beb4;
+  font-size: 7px;
+  line-height: 1.45;
+  margin: 7px 0 0;
+}
+.guide-draft-review {
+  border: 1px solid rgba(138, 180, 255, 0.24);
+  border-radius: 9px;
+  background: rgba(138, 180, 255, 0.06);
+  padding: 9px;
+}
+.guide-draft-review > span {
+  color: var(--blue);
+  font:
+    800 7px ui-monospace,
+    monospace;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.guide-draft-review h3 {
+  font-size: 11px;
+  margin: 5px 0 0;
+}
+.guide-draft-review ol {
+  display: grid;
+  gap: 6px;
+  margin: 9px 0 0;
+  padding-left: 17px;
+}
+.guide-draft-review li {
+  color: #8da399;
+  font-size: 7px;
+}
+.guide-draft-review li b,
+.guide-draft-review li span {
+  display: block;
+}
+.guide-draft-review li span {
+  margin-top: 2px;
+  line-height: 1.35;
 }
 .await-agent {
   color: var(--amber);

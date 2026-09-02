@@ -176,14 +176,14 @@ export function useWebMCPTools({ snapshot, snapshotRef, command, enabled }: UseT
             provenance: guide.provenance,
             steps: guide.steps.length,
           }));
-          if (value.recording?.status === "published")
+          if (value.recording?.status === "published" && value.recording.publishedGuide)
             guides.push({
-              id: value.recording.guideId ?? "recorded-guide",
-              version: 1,
-              title: value.recording.draftTitle ?? "Recorded expense guide",
-              manifestVersion: value.capabilityManifestVersion,
-              provenance: "Recorded guide",
-              steps: value.recording.entries.length,
+              id: value.recording.publishedGuide.id,
+              version: value.recording.publishedGuide.version,
+              title: value.recording.publishedGuide.title,
+              manifestVersion: value.recording.publishedGuide.manifestVersion,
+              provenance: value.recording.publishedGuide.provenance,
+              steps: value.recording.publishedGuide.steps.length,
             });
           return readResult(
             `${guides.length} reviewed guide${guides.length === 1 ? " is" : "s are"} available.`,

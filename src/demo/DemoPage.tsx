@@ -478,6 +478,7 @@ function JourneyStart({
         <div className="on-demand-note">
           <Sparkles size={15} />
           <span>
+            <b>Planned for this session</b>
             The agent will compose a journey from the capabilities currently exposed by this page.
           </span>
         </div>
@@ -601,6 +602,10 @@ function JourneyControl({
   const index = snapshot.steps.findIndex((step) => step.id === current.id);
   return (
     <div className="journey-control">
+      <div className="journey-source-label">
+        {snapshot.source?.kind === "recorded" ? <History size={11} /> : <WandSparkles size={11} />}
+        {snapshot.source?.kind === "recorded" ? "Recorded guide" : "Planned for this session"}
+      </div>
       <div className="progress-meta">
         <span>
           STEP {String(index + 1).padStart(2, "0")} /{" "}
@@ -895,6 +900,17 @@ function RecordingControl({
   run: (name: string, command: any) => Promise<any>;
 }) {
   const recording = snapshot.recording;
+  const [narration, setNarration] = useState<Record<number, string>>({});
+  const statusLabel =
+    recording?.status === "draft"
+      ? "AI-generated draft"
+      : recording?.status === "published"
+        ? "Recorded guide"
+        : recording?.status === "review"
+          ? "Recorded guide · awaiting draft"
+          : recording?.status === "recording"
+            ? "Recording in progress"
+            : "Ready to teach";
   return (
     <div className="recording-control">
       <div>
@@ -910,6 +926,7 @@ function RecordingControl({
           </small>
         </div>
       </div>
+      <span className={`recording-provenance ${recording?.status ?? "ready"}`}>{statusLabel}</span>
       {!recording || recording.status === "published" ? (
         <button
           onClick={() =>
@@ -930,7 +947,92 @@ function RecordingControl({
           <Check size={14} /> Publish
         </button>
       ) : (
-        <span className="await-agent">Ask agent for draft</span>
+        <div className="recording-draft-actions">
+          <span className="await-agent">Ask the agent via WebMCP</span>
+          <button
+            onClick={() =>
+              void run("generate_guide_draft_ui", {
+                type: "GenerateGuideDraft",
+                title: "Submit a client dinner",
+              })
+            }
+          >
+            <WandSparkles size={14} /> Build draft without an agent
+          </button>
+        </div>
+      )}
+      {recording && recording.status !== "recording" && recording.entries.length > 0 && (
+        <div className="recording-review" aria-label="Recorded actions">
+          {recording.entries.map((entry) => (
+            <article key={entry.sequence}>
+              <div className="recording-entry-heading">
+                <span>{String(entry.sequence).padStart(2, "0")}</span>
+                <div>
+                  <b>{entry.title}</b>
+                  <small>{entry.capabilityId}</small>
+                </div>
+              </div>
+              <div className="recording-state-change">
+                <span>
+                  Before · {entry.before.outcomeSatisfied ? "outcome met" : "outcome not met"}
+                </span>
+                <ArrowRight size={12} />
+                <span>After · {entry.after.outcomeSatisfied ? "outcome met" : "recorded"}</span>
+              </div>
+              {recording.status === "review" && (
+                <label>
+                  <span>Optional narration for action {entry.sequence}</span>
+                  <div>
+                    <input
+                      value={narration[entry.sequence] ?? entry.narration ?? ""}
+                      maxLength={500}
+                      placeholder="Explain the judgment behind this step"
+                      onChange={(event) =>
+                        setNarration((current) => ({
+                          ...current,
+                          [entry.sequence]: event.target.value,
+                        }))
+                      }
+                    />
+                    <button
+                      aria-label={`Save narration for action ${entry.sequence}`}
+                      disabled={!(narration[entry.sequence] ?? "").trim()}
+                      onClick={() =>
+                        void run("update_recording_narration_ui", {
+                          type: "UpdateRecordingNarration",
+                          sequence: entry.sequence,
+                          narration: narration[entry.sequence],
+                        })
+                      }
+                    >
+                      Save
+                    </button>
+                  </div>
+                </label>
+              )}
+              {entry.narration && recording.status !== "review" && <p>{entry.narration}</p>}
+            </article>
+          ))}
+        </div>
+      )}
+      {recording?.draft && ["draft", "published"].includes(recording.status) && (
+        <div className="guide-draft-review">
+          <span>{recording.status === "published" ? "Recorded guide" : "AI-generated draft"}</span>
+          <h3>{recording.draft.title}</h3>
+          <small>
+            {recording.draftOrigin === "deterministic"
+              ? "Deterministic fallback · server validated"
+              : "Agent-authored · server validated"}
+          </small>
+          <ol>
+            {recording.draft.steps.map((step) => (
+              <li key={step.capabilityId}>
+                <b>{step.title}</b>
+                <span>{step.description}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
       )}
     </div>
   );

@@ -3,6 +3,7 @@ import { DEFAULT_RECORDED_GUIDE, DEMO_BUSINESS_PURPOSE } from "./fixtures";
 import { compileHealing, createRepair, validateRepair } from "./healingCompiler";
 import { getManifest } from "./manifests";
 import { actorMayExecute } from "./policies";
+import { compileRecordingGuide } from "./recordingCompiler";
 import type { CommandEnvelope, Decision, DomainError, JourneySnapshot, JourneyStep } from "./types";
 
 const fail = (code: DomainError["code"], message: string, retryable = false): Decision => ({
@@ -414,27 +415,73 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
         return fail("PRECONDITION_FAILED", "No recording is active.");
       return { ok: true, events: [{ type: "RecordingStopped", safePayload: {} }] };
 
-    case "SaveGuideDraft":
-      if (actor.kind !== "agent" || actor.surface !== "webmcp")
-        return fail("POLICY_DENIED", "Guide drafts are proposed by the agent through WebMCP.");
+    case "UpdateRecordingNarration":
+      if (actor.kind !== "human" || actor.surface !== "ui")
+        return fail("POLICY_DENIED", "Only the visible human UI can annotate a recording.");
+      if (!snapshot.recording || snapshot.recording.status === "recording")
+        return fail("PRECONDITION_FAILED", "Stop the recording before annotating its actions.");
+      if (!snapshot.recording.entries.some((entry) => entry.sequence === command.sequence))
+        return fail("NOT_FOUND", `Recorded action ${command.sequence} does not exist.`);
+      return {
+        ok: true,
+        events: [
+          {
+            type: "RecordingNarrationUpdated",
+            safePayload: { sequence: command.sequence, narration: command.narration },
+          },
+        ],
+      };
+
+    case "GenerateGuideDraft": {
+      if (actor.kind !== "human" || actor.surface !== "ui")
+        return fail("POLICY_DENIED", "The deterministic fallback is a visible human UI action.");
       if (!snapshot.recording || !["review", "draft"].includes(snapshot.recording.status))
         return fail("PRECONDITION_FAILED", "Stop and review a recording first.");
-      if (!snapshot.recording.entries.length)
-        return fail("PRECONDITION_FAILED", "The recording contains no accepted semantic actions.");
+      const compiled = compileRecordingGuide({
+        recording: snapshot.recording,
+        manifest: getManifest(snapshot.portalVersion),
+        title: command.title,
+      });
+      if (!compiled.ok) return fail("INVALID_INPUT", compiled.reason);
       return {
         ok: true,
         events: [
           {
             type: "GuideDraftSaved",
-            safePayload: { title: command.title, narration: command.narration ?? "" },
+            safePayload: { guide: compiled.guide, origin: "deterministic" },
           },
         ],
       };
+    }
+
+    case "SaveGuideDraft": {
+      if (actor.kind !== "agent" || actor.surface !== "webmcp")
+        return fail("POLICY_DENIED", "Guide drafts are proposed by the agent through WebMCP.");
+      if (!snapshot.recording || !["review", "draft"].includes(snapshot.recording.status))
+        return fail("PRECONDITION_FAILED", "Stop and review a recording first.");
+      const compiled = compileRecordingGuide({
+        recording: snapshot.recording,
+        manifest: getManifest(snapshot.portalVersion),
+        title: command.title,
+        narration: command.narration,
+        proposedSteps: command.steps,
+      });
+      if (!compiled.ok) return fail("INVALID_INPUT", compiled.reason);
+      return {
+        ok: true,
+        events: [
+          {
+            type: "GuideDraftSaved",
+            safePayload: { guide: compiled.guide, origin: "agent" },
+          },
+        ],
+      };
+    }
 
     case "PublishGuide":
       if (actor.kind !== "human" || actor.surface !== "ui")
         return fail("POLICY_DENIED", "Guide publication is human-only.");
-      if (snapshot.recording?.status !== "draft")
+      if (snapshot.recording?.status !== "draft" || !snapshot.recording.draft)
         return fail(
           "PRECONDITION_FAILED",
           "Review an agent-authored guide draft before publication.",
@@ -444,7 +491,14 @@ export function decide(snapshot: JourneySnapshot, envelope: CommandEnvelope): De
         events: [
           {
             type: "GuidePublished",
-            safePayload: { guideId: `guide-${crypto.randomUUID().slice(0, 8)}` },
+            safePayload: {
+              guide: {
+                ...snapshot.recording.draft,
+                id: `guide-${crypto.randomUUID().slice(0, 8)}`,
+                provenance: "Recorded guide",
+                status: "published",
+              },
+            },
           },
         ],
       };

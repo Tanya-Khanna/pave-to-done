@@ -58,9 +58,30 @@ export const journeyCommandSchema = z.discriminatedUnion("type", [
   z.object({ type: z.literal("StopRecording") }).strict(),
   z
     .object({
+      type: z.literal("UpdateRecordingNarration"),
+      sequence: z.number().int().positive().max(200),
+      narration: z.string().trim().min(1).max(500),
+    })
+    .strict(),
+  z.object({ type: z.literal("GenerateGuideDraft"), title: boundedText.optional() }).strict(),
+  z
+    .object({
       type: z.literal("SaveGuideDraft"),
       title: boundedText,
       narration: z.string().max(500).optional(),
+      steps: z
+        .array(
+          z
+            .object({
+              capabilityId: boundedText,
+              title: boundedText,
+              description: boundedText,
+            })
+            .strict(),
+        )
+        .min(1)
+        .max(20)
+        .optional(),
     })
     .strict(),
   z.object({ type: z.literal("PublishGuide") }).strict(),

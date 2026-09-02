@@ -55,6 +55,30 @@ export const toolInputValidators = {
         .max(500)
         .optional()
         .describe("Optional bounded narration from the reviewed trace."),
+      steps: z
+        .array(
+          z
+            .object({
+              capabilityId: z
+                .string()
+                .trim()
+                .min(3)
+                .max(120)
+                .describe("Registered capability from the trace."),
+              title: z.string().trim().min(3).max(120).describe("Clear action title."),
+              description: z
+                .string()
+                .trim()
+                .min(3)
+                .max(240)
+                .describe("Grounded action description."),
+            })
+            .strict(),
+        )
+        .min(1)
+        .max(20)
+        .optional()
+        .describe("Ordered steps matching the recorded capabilities."),
     })
     .strict(),
 } as const;

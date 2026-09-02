@@ -1,8 +1,10 @@
 import { reassignSteps } from "./compiler";
 import { createInitialSnapshot } from "./initialState";
+import { getManifest } from "./manifests";
 import type {
   DomainEvent,
   ExpenseField,
+  Guide,
   JourneySnapshot,
   JourneyStep,
   RecordingEntry,
@@ -20,28 +22,69 @@ function advance(steps: JourneyStep[], completedCapabilities: string[]): Journey
   });
 }
 
-function recordingEntry(event: DomainEvent, snapshot: JourneySnapshot): RecordingEntry | null {
-  const map: Record<string, { capabilityId: string; title: string; risk: RecordingEntry["risk"] }> =
-    {
-      ExpenseDraftCreated: {
-        capabilityId: "expense.readReceipt",
-        title: "Read receipt and create draft",
-        risk: "reversible",
-      },
-      ExpenseFieldUpdated: {
-        capabilityId: String(event.safePayload.capabilityId ?? "expense.update"),
-        title: "Update expense field",
-        risk: "reversible",
-      },
-      ExpenseSubmissionPrepared: {
-        capabilityId: "expense.prepare",
-        title: "Prepare expense",
-        risk: "reversible",
-      },
-    };
-  const definition = map[event.type];
-  if (!definition || snapshot.recording?.status !== "recording") return null;
-  return { ...definition, actor: event.actor.kind, redactedInput: { recorded: true } };
+function observedState(snapshot: JourneySnapshot, capabilityId: string) {
+  const capability = getManifest(snapshot.portalVersion).capabilities.find(
+    (candidate) => candidate.id === capabilityId,
+  );
+  const value = capability?.requiredField ? snapshot.expense[capability.requiredField] : undefined;
+  const outcomeSatisfied =
+    typeof value === "number" ? Number.isFinite(value) && value > 0 : Boolean(value);
+  return {
+    outcomeSatisfied:
+      capabilityId === "expense.prepare"
+        ? ["prepared", "submitted"].includes(snapshot.expense.status)
+        : capabilityId === "expense.submit"
+          ? snapshot.expense.status === "submitted"
+          : outcomeSatisfied,
+    expenseStatus: snapshot.expense.status,
+    stepComplete: snapshot.steps.some(
+      (step) => step.capabilityId === capabilityId && step.status === "complete",
+    ),
+  };
+}
+
+function recordingEntry(
+  event: DomainEvent,
+  before: JourneySnapshot,
+  after: JourneySnapshot,
+): RecordingEntry | null {
+  if (before.recording?.status !== "recording") return null;
+  const capabilityId =
+    event.type === "ExpenseDraftCreated"
+      ? "expense.readReceipt"
+      : event.type === "ExpenseFieldUpdated"
+        ? String(event.safePayload.capabilityId ?? "")
+        : event.type === "ExpenseSubmissionPrepared"
+          ? "expense.prepare"
+          : event.type === "ExpenseSubmitted"
+            ? "expense.submit"
+            : "";
+  if (!capabilityId) return null;
+  const capability = getManifest(after.portalVersion).capabilities.find(
+    (candidate) => candidate.id === capabilityId,
+  );
+  if (!capability) return null;
+  const redactedInput =
+    event.type === "ExpenseFieldUpdated"
+      ? { field: String(event.safePayload.field), value: "[REDACTED]" }
+      : event.type === "ExpenseSubmissionPrepared"
+        ? { confirmation: "[REDACTED]" }
+        : event.type === "ExpenseSubmitted"
+          ? { result: "[REDACTED]" }
+          : { receiptFacts: "[REDACTED]" };
+  return {
+    sequence: before.recording.entries.length + 1,
+    capabilityId,
+    title: capability.title,
+    actor: event.actor.kind,
+    risk: capability.risk,
+    redactedInput,
+    before: observedState(before, capabilityId),
+    after: observedState(after, capabilityId),
+    portalVersion: after.portalVersion,
+    manifestVersion: after.capabilityManifestVersion,
+    anchorKey: capability.anchorKey,
+  };
 }
 
 export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySnapshot {
@@ -251,31 +294,51 @@ export function evolve(previous: JourneySnapshot, event: DomainEvent): JourneySn
       if (next.recording) next = { ...next, recording: { ...next.recording, status: "review" } };
       break;
     case "GuideDraftSaved":
-      if (next.recording)
+      if (next.recording) {
+        const guide = event.safePayload.guide as Guide;
         next = {
           ...next,
           recording: {
             ...next.recording,
             status: "draft",
-            draftTitle: String(event.safePayload.title),
-            narration: String(event.safePayload.narration ?? next.recording.narration),
+            draftTitle: guide.title,
+            draft: guide,
+            draftOrigin: event.safePayload.origin as "agent" | "deterministic",
           },
         };
+      }
       break;
-    case "GuidePublished":
+    case "RecordingNarrationUpdated":
       if (next.recording)
         next = {
           ...next,
           recording: {
             ...next.recording,
-            status: "published",
-            guideId: String(event.safePayload.guideId),
+            entries: next.recording.entries.map((entry) =>
+              entry.sequence === Number(event.safePayload.sequence)
+                ? { ...entry, narration: String(event.safePayload.narration) }
+                : entry,
+            ),
           },
         };
       break;
+    case "GuidePublished":
+      if (next.recording) {
+        const guide = event.safePayload.guide as Guide;
+        next = {
+          ...next,
+          recording: {
+            ...next.recording,
+            status: "published",
+            guideId: guide.id,
+            publishedGuide: guide,
+          },
+        };
+      }
+      break;
   }
 
-  const entry = recordingEntry(event, previous);
+  const entry = recordingEntry(event, previous, next);
   if (entry && next.recording)
     next = {
       ...next,
