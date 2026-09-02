@@ -12,10 +12,10 @@ An adaptive journey layer for web apps where a person can **learn the task**, **
 
 </div>
 
-![The deployed pave.to(done) app moving from its landing page through shared execution, human-only confirmation, verified completion, and a reviewed Portal v2 repair](./docs/assets/interaction-preview.gif)
+![A real WebMCP session in the deployed pave.to(done) app: diagnostics advance from inspection through journey creation, draft updates, and a human-only confirmation boundary](./docs/assets/webmcp-invocation.gif)
 
 > [!IMPORTANT]
-> **Build status — September 1, 2026:** the complete vertical slice is live: all three agency modes, real imperative WebMCP tools, recorded and on-demand journeys, semantic guidance, reviewed self-healing, server-authoritative approvals, voice input/output, event replay, and the responsive product UI. The animation above was captured from the deployed build by the checked-in `npm run capture:demo` script.
+> **Build status — September 2, 2026:** the complete vertical slice is live: all three agency modes, real imperative WebMCP tools, recorded and on-demand journeys, semantic guidance, reviewed self-healing, server-authoritative approvals, voice input/output, event replay, and the responsive product UI. Every frame above comes from one real session in ChatGPT's in-app browser. The page's native WebMCP tools performed `get_app_context`, `create_journey`, `create_expense_draft`, two `update_expense_draft` calls, and `prepare_expense_submission`; the visible diagnostics and portal state changed after each call. The exact capture provenance and reproduction command are [documented](./docs/media-proof.md).
 
 ## The 20-second version
 
@@ -68,7 +68,7 @@ WebMCP is not a remote-control attachment here. It is the contract that lets the
 
 Remove WebMCP and the core loop disappears: the agent can no longer inspect the site's authoritative state, follow or repair the journey, act through product-defined operations, or verify that the visible application reached the promised result.
 
-![The deployed demo running inside ChatGPT's in-app browser with the WebMCP ready indicator visible](./docs/assets/webmcp-live.png)
+![The deployed demo inside ChatGPT's in-app browser showing WebMCP ready, five currently registered tools, the real prepare_expense_submission invocation, operation ID, and revision advancing from four to five](./docs/assets/webmcp-invocation-live.jpg)
 
 ## WebMCP surface
 
@@ -173,7 +173,7 @@ Production pushes use [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). 
 
 ## Quality gates
 
-The automatic GitHub release gate runs formatting, ESLint, TypeScript, the deterministic domain/property/prompt-eval suite, and a production Worker build before a main-branch commit can enter the production deployment job. The checked-in Playwright suite separately covers eight browser journeys against the built Worker or a supplied live URL. `verify:live` checks the deployed health route, security headers, Durable Object state, exactly-once retry behavior, stale-revision rejection, and the persisted event chain.
+The automatic GitHub release gate runs formatting, ESLint, TypeScript, the deterministic domain/property/prompt-eval suite, and a production Worker build before a main-branch commit can enter the production deployment job. The checked-in Playwright suite separately covers 32 browser scenarios against the built Worker or a supplied live URL. `verify:live` checks the deployed health route, security headers, Durable Object state, exactly-once retry behavior, stale-revision rejection, and the persisted event chain.
 
 The current submission build has passed all three layers. It also has direct in-app-browser evidence of live WebMCP discovery, no sensitive finalization tool, progress-preserving repair, keyboard and reduced-motion behavior, responsive layouts, and clean guest reset. The remaining submission operation is recording and publishing the narrated YouTube demo from the frozen build.
 

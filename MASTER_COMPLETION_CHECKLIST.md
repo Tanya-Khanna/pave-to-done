@@ -14,7 +14,7 @@
 
 ## Current progress
 
-**Active step:** Step 15 — Performance and visual quality (with Chrome verification pending in Step 1)
+**Active step:** Step 18 — README and media (two Lighthouse targets were explicitly deferred; Step 16 awaits uninvolved participants; three external-device checks remain in Steps 1 and 17)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
@@ -30,6 +30,9 @@
 **Completed in Step 13:** 13 of 13 items
 **Completed in Step 14:** 12 of 12 items
 **Completed in Step 15:** 5 of 7 items
+**Completed in Step 16:** 0 of 6 items
+**Completed in Step 17:** 4 of 7 items
+**Completed in Step 18:** 3 of 6 items
 
 **Current implementation deployment:** Cloudflare version `b7d26bd2-d51c-437b-a0ae-ad072587de0f` from verified GitHub commit `1b945e6` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33657148841`, the live protocol verifier, all 91 local unit/integration tests, all 32 deployed browser tests, and 30 final in-app-browser WebMCP prompt trials passed.
 
@@ -282,6 +285,8 @@
 
 ## 15. Performance and visual quality
 
+The owner explicitly deferred the two numerical Lighthouse targets on September 2 so submission-critical work could continue. They remain unchecked and are not represented as completed.
+
 - [ ] Achieve a Lighthouse performance score of at least 90.
 - [ ] Achieve a Lighthouse accessibility score of at least 90.
 - [x] Remove all production console errors. — Evidence: `e2e/performance-quality.spec.ts` captures browser console errors and uncaught page errors while loading the landing page, entering the demo, and starting the shared journey; the deployed Cloudflare run passed with both collections empty.
@@ -292,6 +297,8 @@
 
 ## 16. Human usability testing
 
+The complete uncoached protocol and blank observation record are ready in `docs/usability-test.md`. These items require two uninvolved people and remain unchecked until the attempts actually occur.
+
 - [ ] Conduct two uncoached usability attempts.
 - [ ] Use people who have not been involved in implementation.
 - [ ] Ask each participant to discover and complete the demo without verbal help.
@@ -301,20 +308,20 @@
 
 ## 17. Production environment verification
 
-- [ ] Test the permanent production URL in ChatGPT's in-app browser.
+- [x] Test the permanent production URL in ChatGPT's in-app browser. — Evidence: on September 2, the in-app browser discovered the deployed page's native WebMCP surface and completed `get_app_context`, `create_journey`, `create_expense_draft`, two `update_expense_draft` calls, and `prepare_expense_submission` against the visible production UI.
 - [ ] Test it in Chrome 149+ with WebMCP enabled.
-- [ ] Test logged out or in incognito mode.
+- [x] Test logged out or in incognito mode. — Evidence: all 32 deployed Playwright scenarios passed in fresh ephemeral browser contexts with no stored login or application cookies.
 - [ ] Test on a second machine or device.
 - [ ] Test on a second network.
-- [ ] Test the mobile layout.
-- [ ] Verify diagnostics report genuine WebMCP registration and invocation.
+- [x] Test the mobile layout. — Evidence: the deployed responsive suite completes layout and semantic guidance checks at 390×844, including no horizontal overflow and a fully visible, non-blocking coach.
+- [x] Verify diagnostics report genuine WebMCP registration and invocation. — Evidence: after the native `prepare_expense_submission` call, the deployed panel reported WebMCP ready, top-level, origin isolated, tools allowed, the five state-relevant registered tools, operation `f37cb023…`, revision 4→5, outcome `ok`, and `Applied and verified`; the capture is `docs/assets/webmcp-invocation-live.jpg`.
 
 ## 18. README and media
 
-- [ ] Replace or supplement the GIF with one that proves real WebMCP tool calls.
-- [ ] Show visible tool invocation and corresponding UI/state changes in the GIF.
+- [x] Replace or supplement the GIF with one that proves real WebMCP tool calls. — Evidence: `docs/assets/webmcp-invocation.gif` contains seven frames captured from one deployed ChatGPT in-app-browser session driven through the page's native WebMCP capability; `docs/media-proof.md` records the exact sequence and reproduction command.
+- [x] Show visible tool invocation and corresponding UI/state changes in the GIF. — Evidence: every frame pairs the changing expense fields and control boundary with diagnostics for the actual last command, operation, revisions, registered tools, and verification outcome.
 - [ ] Verify GIF playback on the logged-out GitHub repository.
-- [ ] Verify meaningful GIF alt text.
+- [x] Verify meaningful GIF alt text. — Evidence: the README alt text describes the actual progression from inspection through journey creation, draft changes, and the human-only confirmation boundary rather than using a generic image label.
 - [ ] Ensure every README command works from a fresh clone.
 - [ ] Ensure README instructions match the frozen submission tag and deployment.
 
