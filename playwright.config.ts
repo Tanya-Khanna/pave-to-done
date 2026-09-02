@@ -18,8 +18,7 @@ export default defineConfig({
   webServer: remoteBaseURL
     ? undefined
     : {
-        command:
-          "npm run build && npx wrangler dev --config dist/pave_to_done/wrangler.json --ip 127.0.0.1 --port 5173",
+        command: "npm run dev -- --host 127.0.0.1 --port 5173",
         url: "http://127.0.0.1:5173/api/health",
         reuseExistingServer: true,
         timeout: 60_000,

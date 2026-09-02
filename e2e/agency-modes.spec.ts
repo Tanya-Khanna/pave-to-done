@@ -38,7 +38,7 @@ test("the human can pause and resume without losing verified work", async ({ pag
   await page.getByRole("button", { name: "Start shared journey" }).click();
   await page.getByRole("button", { name: "Pause journey" }).click();
 
-  await expect(page.getByText("JOURNEY PAUSED")).toBeVisible();
+  await expect(page.getByText("JOURNEY PAUSED", { exact: true })).toBeVisible();
   await expect(page.getByText("Work is safely held")).toBeVisible();
   await expect(page.getByRole("button", { name: "Resume journey" })).toHaveCount(2);
 

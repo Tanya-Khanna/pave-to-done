@@ -157,9 +157,11 @@ function DemoExperience() {
       <div className="sr-only" role="status" aria-live="polite" aria-atomic="true">
         {snapshot.status === "completed"
           ? "Journey complete and history verified."
-          : current
-            ? `Step ${completed + 1} of ${snapshot.steps.length}. ${current.title}. Control is with ${current.assignedActor === "agent" ? "the agent" : "you"}.`
-            : `Journey status: ${snapshot.status}.`}
+          : snapshot.status === "paused"
+            ? "Journey paused. Agent work is blocked until you resume it."
+            : current
+              ? `Step ${completed + 1} of ${snapshot.steps.length}. ${current.title}. Control is with ${current.assignedActor === "agent" ? "the agent" : "you"}.`
+              : `Journey status: ${snapshot.status}.`}
       </div>
       <header className="demo-topbar">
         <div className="topbar-left">
@@ -357,6 +359,9 @@ function DemoExperience() {
       <GuidanceOverlay
         anchorKey={snapshot.lastGuidance?.anchorKey}
         active={Boolean(snapshot.lastGuidance && snapshot.status === "awaiting_user")}
+        title={current?.title}
+        reason={snapshot.lastGuidance?.message ?? current?.description}
+        actor={current?.assignedActor}
       />
       {notice && (
         <div className="toast" role="status">

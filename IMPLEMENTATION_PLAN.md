@@ -227,7 +227,7 @@ Start testing with this prompt:
 1. ~~Create an `AnchorRegistry` keyed by capability ID.~~ ✅
 2. ~~Measure target bounds on layout, resize, scroll, and portal version change.~~ ✅
 3. ~~Render spotlight with a non-blocking cutout.~~ ✅
-4. Render semantic target outline, attention waypoint, anchored coach card, and optional ghost gesture.
+4. ~~Render semantic target outline, attention waypoint, and anchored coach card. Omit the optional ghost gesture because simulated pointer motion could falsely imply execution.~~ ✅
 5. ~~Keep instructed control clickable and focusable.~~ ✅
 6. ~~Add keyboard focus, screen-reader status, and reduced-motion behavior.~~ ✅
 

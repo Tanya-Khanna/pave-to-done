@@ -131,8 +131,8 @@ The agent reads application state and displays one current step. The guidance sy
 - a spotlight that lowers irrelevant visual noise;
 - ~~a semantic outline around the actual target;~~ ✅
 - ~~a small pulsing attention marker;~~ ✅
-- an optional ghost-cursor gesture that demonstrates direction without clicking;
-- an anchored coach card with action, reason, and expected result;
+- ~~a deliberately omitted ghost-cursor gesture: simulated pointer movement could imply an action occurred and adds no information beyond the semantic target, so the production interaction does not use one;~~ ✅
+- ~~an anchored coach card with action, reason, and expected result;~~ ✅
 - ~~a progress rail; and~~ ✅
 - ~~a control baton labeled **Your turn**.~~ ✅
 
