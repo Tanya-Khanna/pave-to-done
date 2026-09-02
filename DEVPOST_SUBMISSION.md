@@ -24,6 +24,8 @@ A journey may come from an expert recording or be composed on demand from the ca
 
 The working demo is a fictional Acme Expense Portal. Ask it to submit an $86 client dinner under Project Atlas, change modes without restarting, then simulate Portal v2. The expense action moves from the sidebar to the header, which heals automatically. Portal v2 also adds a required business-purpose field, which requires a reviewed repair. The agent can prepare the final expense but cannot submit it; only the visible human control can cross that boundary.
 
+A second, genuinely different workflow proves that no prior recording is required: ask for a mileage reimbursement and the agent composes a seven-step journey from the site's live mileage capabilities. It remains session-only rather than pretending to be a reviewed guide.
+
 ## Why this is a strong fit for WebMCP
 
 WebMCP is the collaboration layer, not an API attached after the fact. The top-level page imperatively registers narrow tools for current capabilities, journey state, guidance, execution, recording review, and repair. Those tools appear and disappear as route and task state change. Agent calls and human UI actions dispatch the same typed commands to one server-authoritative, revisioned journey.
@@ -36,13 +38,19 @@ Without WebMCP, the central experience disappears: the agent cannot discover the
 
 A person can start in teaching mode, hand reversible steps to an agent, take back control for judgment, and delegate the remainder without restarting or copying context. When the application changes mid-task, both participants see the same preserved progress, the same repair, and the same approval boundary. Existing tours guide but do not share execution; autonomous agents execute but do not preserve a product-owned teaching path. This project makes instruction, collaboration, delegation, and maintenance one continuous journey.
 
+## What makes it different
+
+Ordinary browser automation treats the page as pixels and selectors. Product tours treat the user as a passive viewer. Agent workspaces move collaboration into another chat or dashboard. `pave.to(done)` keeps the collaboration inside the product being operated: semantic capabilities map back to visible React elements, both actors share one revisioned journey, and the application itself defines which actions are reversible, judgmental, or human-only.
+
+The novel unit is not a macro or an agent conversation. It is a versioned journey that can move along an agency spectrum and repair itself without erasing completed work or weakening authority. Recording, on-demand planning, in-page guidance, shared execution, delegation, verification, and repair are one coherent state machine.
+
 ## How it was built
 
-The client uses React, TypeScript, and Vite. The WebMCP adapter registers 13 strict tools through `document.modelContext.registerTool`, with route-level and state-level `AbortController` cleanup. A semantic anchor registry connects tool capabilities to visible guidance without letting tool executors click the DOM.
+The client uses React, TypeScript, and Vite. The WebMCP adapter registers 15 strict tools through `document.modelContext.registerTool`, with route-level and state-level `AbortController` cleanup. A semantic anchor registry connects tool capabilities to visible guidance without letting tool executors click the DOM.
 
 Cloudflare Workers route each anonymous guest session to one Durable Object. The object serializes concurrent writes, enforces expected revisions and agency policy, stores exactly-once operation results, and appends a tamper-evident hash chain of domain events. The deterministic core follows `decide → events → evolve`, allowing replay and property testing. One-time expiring confirmation challenges protect final submission.
 
-The release gate includes 10 unit, property, contract, and prompt-eval checks; 8 browser journeys; formatting, lint, and TypeScript checks; production build verification; and a live smoke test for security headers, idempotent retries, stale revisions, and persisted events.
+The verified build passes 91 unit, integration, property, contract, and prompt-eval tests; 32 deployed browser scenarios; and 30 final in-app-browser WebMCP prompt trials across ten categories. The release gate also runs formatting, lint, Worker type generation checks, TypeScript, the production build, and a live verifier for security headers, exactly-once retries, stale revisions, and persisted hash-chained events.
 
 ## Better user experience
 

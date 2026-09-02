@@ -6,19 +6,19 @@
 
 Use this as a literal release checklist. Do not mark an item complete because it is planned.
 
-## Verified release evidence — September 1
+## Verified release evidence — September 2
 
-| Evidence                  | Result                                                                                                                                                               |
-| ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Permanent live demo       | `https://pave-to-done.north-raincoat.workers.dev/demo` claimed into the entrant's Cloudflare account                                                                 |
-| Cloudflare version        | `36165c51-5d41-4974-af94-d9cab57fed09`                                                                                                                               |
-| Live operational verifier | Passed health, security headers, Durable Object persistence, exactly-once retry, and stale-revision rejection                                                        |
-| Live browser suite        | 8/8 Playwright journeys passed against the permanent deployment                                                                                                      |
-| Live WebMCP proof         | ChatGPT in-app browser displayed `WebMCP ready` and discovered the six valid idle-state tools with strict schemas and annotations                                    |
-| Repository release gate   | GitHub Actions passed formatting, ESLint, TypeScript, 10 deterministic tests, and the production Worker build                                                        |
-| Public artifacts          | MIT license, source, deployed-product GIF, screenshots, architecture walkthrough, PRD, engineering spec, resource audit, and ready-to-paste Devpost copy are present |
+| Evidence                  | Result                                                                                                                                                          |
+| ------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Permanent live demo       | `https://pave-to-done.north-raincoat.workers.dev/demo` claimed into the entrant's Cloudflare account                                                            |
+| Cloudflare version        | `bb79da97-16e4-44fa-b83e-45138152b171`                                                                                                                          |
+| Live operational verifier | Passed health, security headers, Durable Object persistence, exactly-once retry, and stale-revision rejection                                                   |
+| Live browser suite        | 32/32 Playwright scenarios passed against the permanent deployment                                                                                              |
+| Live WebMCP proof         | 30/30 final prompt trials passed; the README GIF shows six real native tool calls, verified revisions, and the human-only boundary                              |
+| Repository release gate   | GitHub Actions passed formatting, ESLint, generated Worker types, TypeScript, 91 deterministic tests, and the production Worker build                           |
+| Public artifacts          | MIT license, source, real WebMCP GIF, screenshots, architecture walkthrough, PRD, engineering spec, resource audit, and ready-to-paste Devpost copy are present |
 
-Human-owned tasks still required before freeze: confirm eligibility and Devpost registration, record and upload the narrated public YouTube demo, insert its URL into the README and submission copy, complete uncoached/second-machine checks, submit the Devpost form, and preserve the submitted repository/site unchanged after the deadline.
+Human-owned tasks still required before freeze: confirm eligibility and Devpost registration, review and upload the rendered 2:21 narrated demo to public YouTube, insert its URL into the README and submission copy, complete uncoached/second-machine checks, submit the Devpost form, and preserve the submitted repository/site unchanged after the deadline.
 
 ## A. Stage One eligibility gate
 
@@ -149,7 +149,7 @@ Human-owned tasks still required before freeze: confirm eligibility and Devpost 
 ### 2:27–2:43 — implementation proof
 
 **Picture:** diagnostic panel and compact code/tool list; action trail matches the authoritative revision and visible expense state.  
-**Narration:** “Thirteen narrow tools and the human UI share a revisioned command service. A Durable Object serializes actions, deduplicates retries, appends auditable events, and returns state-verified results. Tools use strict schemas, scoped lifecycles, cancellation, and untrusted-content annotations.”
+**Narration:** “Fifteen narrow tools and the human UI share a revisioned command service. A Durable Object serializes actions, deduplicates retries, appends auditable events, and returns state-verified results. Tools use strict schemas, scoped lifecycles, cancellation, and untrusted-content annotations.”
 
 ### 2:43–2:50 — close
 

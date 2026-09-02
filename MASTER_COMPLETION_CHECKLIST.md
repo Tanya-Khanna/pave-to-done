@@ -14,7 +14,7 @@
 
 ## Current progress
 
-**Active step:** Step 18 — README and media (two Lighthouse targets were explicitly deferred; Step 16 awaits uninvolved participants; three external-device checks remain in Steps 1 and 17)
+**Active step:** Step 20 — Devpost submission (public YouTube and outside-participant/device checks remain external prerequisites)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
@@ -32,7 +32,9 @@
 **Completed in Step 15:** 5 of 7 items
 **Completed in Step 16:** 0 of 6 items
 **Completed in Step 17:** 4 of 7 items
-**Completed in Step 18:** 3 of 6 items
+**Completed in Step 18:** 5 of 6 items
+**Completed in Step 19:** 9 of 12 items
+**Completed in Step 20:** 8 of 14 items
 
 **Current implementation deployment:** Cloudflare version `b7d26bd2-d51c-437b-a0ae-ad072587de0f` from verified GitHub commit `1b945e6` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33657148841`, the live protocol verifier, all 91 local unit/integration tests, all 32 deployed browser tests, and 30 final in-app-browser WebMCP prompt trials passed.
 
@@ -320,36 +322,36 @@ The complete uncoached protocol and blank observation record are ready in `docs/
 
 - [x] Replace or supplement the GIF with one that proves real WebMCP tool calls. — Evidence: `docs/assets/webmcp-invocation.gif` contains seven frames captured from one deployed ChatGPT in-app-browser session driven through the page's native WebMCP capability; `docs/media-proof.md` records the exact sequence and reproduction command.
 - [x] Show visible tool invocation and corresponding UI/state changes in the GIF. — Evidence: every frame pairs the changing expense fields and control boundary with diagnostics for the actual last command, operation, revisions, registered tools, and verification outcome.
-- [ ] Verify GIF playback on the logged-out GitHub repository.
+- [x] Verify GIF playback on the logged-out GitHub repository. — Evidence: an unauthenticated GitHub request reported `currentUser: null`, `isLoggedIn: false`, the public repository and visible MIT license, and rendered the image with `data-animated-image`; the unauthenticated raw download decoded as a 960×540 seven-frame GIF and matched the committed SHA-256 exactly.
 - [x] Verify meaningful GIF alt text. — Evidence: the README alt text describes the actual progression from inspection through journey creation, draft changes, and the human-only confirmation boundary rather than using a generic image label.
-- [ ] Ensure every README command works from a fresh clone.
+- [x] Ensure every README command works from a fresh clone. — Evidence: a public depth-one clone into `/tmp/pave-fresh-verify-20260902` installed with zero vulnerabilities, passed formatting, lint, generated Worker-type consistency, type checking, all 91 tests, the production build, all 32 browser tests through the documented dev server, and the live verifier without relying on the working tree.
 - [ ] Ensure README instructions match the frozen submission tag and deployment.
 
 ## 19. Demo video
 
-- [ ] Record a narrated demo shorter than three minutes.
-- [ ] Include an audible explanation.
-- [ ] Show actual WebMCP tool registration or diagnostics.
-- [ ] Show the agent invoking multiple tools.
-- [ ] Show all three modes.
-- [ ] Show a sensitive action requiring human confirmation.
-- [ ] Show a website change and self-healing repair.
-- [ ] Show recording or the no-guide path.
-- [ ] Show the resulting shared visible state.
+- [x] Record a narrated demo shorter than three minutes. — Evidence: `npm run render:video` produced `docs/video/pave-to-done-demo.mp4` at 2:21, safely below the three-minute limit, from the permanent deployment and genuine in-app-browser WebMCP captures.
+- [x] Include an audible explanation. — Evidence: the MP4 contains a 141-second AAC narration track covering the problem, three modes, WebMCP, approval boundary, healing, no-guide path, and implementation; automated audio analysis measured -16.1 dB mean and -1.6 dB peak rather than silence.
+- [x] Show actual WebMCP tool registration or diagnostics. — Evidence: the video uses the provenance-recorded frames from the real native WebMCP run; the panel visibly shows live registered tools, command name, operation ID, sent/returned revisions, and verified outcome.
+- [x] Show the agent invoking multiple tools. — Evidence: the seven-frame live sequence advances through `get_app_context`, `create_journey`, `create_expense_draft`, two `update_expense_draft` calls, and `prepare_expense_submission` while the visible expense changes.
+- [x] Show all three modes. — Evidence: the deployed application footage visibly selects Show Me, Do It With Me, and Do It For Me during one journey without discarding progress.
+- [x] Show a sensitive action requiring human confirmation. — Evidence: the native WebMCP sequence ends at the human-only review boundary and the live product footage shows the visible confirmation control rather than an agent submission tool.
+- [x] Show a website change and self-healing repair. — Evidence: the video shows Portal v2 moving the expense action, adding the material business-purpose requirement, the real `propose_journey_repair` diagnostic at revision 3→4, and the subsequent human approval at revision 5.
+- [x] Show recording or the no-guide path. — Evidence: the video shows the live `mileage.v1` on-demand manifest labeled `PLANNED FOR THIS SESSION`, created by a real `create_journey` WebMCP call without a recorded guide.
+- [x] Show the resulting shared visible state. — Evidence: each WebMCP frame pairs the agent command diagnostics with the same portal fields, journey step, revision, and history verification visible to the person.
 - [ ] Upload the video publicly to YouTube.
 - [ ] Verify playback while logged out.
 - [ ] Confirm audio, captions, resolution, and description links.
 
 ## 20. Devpost submission
 
-- [ ] Write final text explaining why the use case is a strong fit for WebMCP.
-- [ ] Explain how the product creates a better user experience.
-- [ ] Explain what people and agents can now do together that was difficult or impossible before.
-- [ ] Briefly explain how WebMCP was implemented.
-- [ ] Make the real audience and problem specific and credible.
-- [ ] Explain novelty compared with ordinary browser automation and existing products.
-- [ ] Add the permanent live URL.
-- [ ] Add the public repository URL.
+- [x] Write final text explaining why the use case is a strong fit for WebMCP. — Evidence: `DEVPOST_SUBMISSION.md` explains that WebMCP is the in-product collaboration contract for live capabilities, shared state, guidance, execution, repair, and verified postconditions, and states exactly what disappears without it.
+- [x] Explain how the product creates a better user experience. — Evidence: the final copy describes one visible task that can move between instruction, turn-taking, and delegation while retaining progress, text/voice fallbacks, verification, and human control.
+- [x] Explain what people and agents can now do together that was difficult or impossible before. — Evidence: the copy states that a person and agent can exchange responsibility, repair a changed workflow, and continue from common verified state without restarting or copying context.
+- [x] Briefly explain how WebMCP was implemented. — Evidence: the implementation section names imperative registration, 15 state-scoped tools, strict generated schemas, lifecycle cleanup, semantic anchors, shared typed commands, Durable Object serialization, exactly-once operations, and confirmation boundaries.
+- [x] Make the real audience and problem specific and credible. — Evidence: the description identifies SaaS product, support, customer-education, and operations teams that repeatedly teach changing workflows, then confines claims to the fictional expense and mileage proof.
+- [x] Explain novelty compared with ordinary browser automation and existing products. — Evidence: the `What makes it different` section contrasts pixel/selector automation, passive tours, and separate agent workspaces with an in-product, versioned semantic journey that combines agency changes and authority-preserving repair.
+- [x] Add the permanent live URL. — Evidence: the links section uses `https://pave-to-done.north-raincoat.workers.dev/demo`, which passed the live verifier and deployed browser suite.
+- [x] Add the public repository URL. — Evidence: the links section uses the logged-out verified public MIT repository `https://github.com/Tanya-Khanna/pave-to-done`.
 - [ ] Add the public YouTube URL.
 - [ ] Complete all required submission fields.
 - [ ] Save and preview the submission early.

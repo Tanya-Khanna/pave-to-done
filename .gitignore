@@ -12,3 +12,8 @@ test-results/
 *.tsbuildinfo
 .playwright-mcp/
 docs/assets/capture/
+docs/video/render/
+docs/video/review-frames/
+docs/video/*.aiff
+docs/video/*.m4a
+docs/video/*.mp4

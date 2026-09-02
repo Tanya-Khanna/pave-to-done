@@ -26,7 +26,7 @@ const click = async (role, name) => {
 
 await page.goto(baseURL, { waitUntil: "networkidle" });
 await pause(1800);
-await click("button", "Run the expense journey");
+await click("button", "Open the live journey");
 await page.getByRole("button", { name: "Start shared journey" }).waitFor();
 await pause(1200);
 

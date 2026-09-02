@@ -1,0 +1,15 @@
+Tutorials go stale when software changes. Traditional automation swings to the other extreme: it takes over, guesses from pixels, and often hides what it is doing. pave to done turns a web task into one shared, visible journey for a person and an agent.
+
+The same task has three levels of agency. In Show Me, the agent explains and highlights while I act. In Do It With Me, we alternate based on judgment and risk. In Do It For Me, the agent completes reversible work, but consequential actions still come back to me. I can change modes without restarting or losing progress.
+
+This is running on the permanent Cloudflare deployment inside ChatGPT's browser. These are real Web M C P calls from the page: inspect context, create a journey, draft the expense, update its fields, and prepare submission. The diagnostics show the live tool set, operation ID, sent and returned revisions, and verified outcome. Human clicks and agent tools update the same server-authoritative state.
+
+The agent can prepare this eighty-six-dollar expense, but there is no Web M C P tool for final submission. The visible page presents the consequence and requires a one-time human confirmation.
+
+Now the website changes. Portal version two moves the expense action and adds a required business-purpose field. The semantic anchor remaps automatically. Because the new field changes the workflow, the agent proposes a bounded repair and pauses. A person reviews it. Completed work survives, and the repair cannot expand the agent's authority.
+
+Journeys can come from a reviewed expert recording, but recording is optional. Here, Web M C P composes a new mileage workflow from the capabilities currently exposed by the site and labels it Planned for this session.
+
+Underneath the interface, one Cloudflare Durable Object serializes people and agents, rejects stale revisions, deduplicates retries, and stores a tamper-evident event history. Fifteen narrow, state-scoped Web M C P tools use strict schemas and verified postconditions.
+
+Teach once. Assist at any level. Stay correct as software changes. This is pave to done.
