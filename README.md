@@ -139,7 +139,7 @@ The exact 2:50 narration and release checks live in [`SUBMISSION_CHECKLIST.md`](
 The app is a React/Vite frontend and Cloudflare Worker backed by one Durable Object per guest journey. Node.js 22 or newer is recommended.
 
 ```bash
-npm install
+npm ci
 npm run dev
 npm run lint
 npm run typecheck
@@ -155,9 +155,23 @@ WebMCP testing targets ChatGPT's in-app browser and Chrome 149+ with WebMCP enab
 
 `verify:live` checks the deployed health route, security headers, Durable Object session creation, exactly-once command retry, stale-revision rejection, and persisted hash-chained events. Override its target with `VERIFY_BASE_URL=https://your-host.example`.
 
+## Deploying to Cloudflare
+
+The repository contains the complete Worker, static assets, Durable Object binding, SQLite migration, compatibility settings, and security headers. It has no required runtime secrets, seed command, or external database.
+
+1. Install Node.js 22 or newer and clone the repository.
+2. Install the locked dependencies with `npm ci`.
+3. Authenticate the Cloudflare account that owns the target Worker with `npx wrangler login` and verify it with `npx wrangler whoami`.
+4. Run `npm run deploy`. Wrangler builds both targets, uploads the assets, binds `JOURNEYS`, and applies the checked-in `v1` Durable Object migration.
+5. Run `npm run verify:live` to verify the canonical deployment, or set `VERIFY_BASE_URL` to the URL Wrangler prints.
+
+The canonical `pave-to-done` Worker name belongs to this submission's Cloudflare account. A fork deploying to another account should first choose a unique `name` in `wrangler.jsonc`; no other local configuration is required.
+
+Production pushes use [`.github/workflows/ci.yml`](./.github/workflows/ci.yml). The `deploy` job runs only for `main`, only after formatting, lint, type checking, deterministic tests, and a production build pass, and uses the GitHub `production` environment. It requires a repository variable named `CLOUDFLARE_ACCOUNT_ID` and an environment secret named `CLOUDFLARE_API_TOKEN` with the minimum Worker deployment permissions.
+
 ## Quality gates
 
-The automatic GitHub release gate runs formatting, ESLint, TypeScript, 10 deterministic domain/property/prompt-eval checks, and a production Worker build. The checked-in Playwright suite separately covers eight browser journeys against the built Worker or a supplied live URL. `verify:live` checks the deployed health route, security headers, Durable Object state, exactly-once retry behavior, stale-revision rejection, and the persisted event chain.
+The automatic GitHub release gate runs formatting, ESLint, TypeScript, the deterministic domain/property/prompt-eval suite, and a production Worker build before a main-branch commit can enter the production deployment job. The checked-in Playwright suite separately covers eight browser journeys against the built Worker or a supplied live URL. `verify:live` checks the deployed health route, security headers, Durable Object state, exactly-once retry behavior, stale-revision rejection, and the persisted event chain.
 
 The current submission build has passed all three layers. It also has direct in-app-browser evidence of live WebMCP discovery, no sensitive finalization tool, progress-preserving repair, keyboard and reduced-motion behavior, responsive layouts, and clean guest reset. The remaining submission operation is recording and publishing the narrated YouTube demo from the frozen build.
 

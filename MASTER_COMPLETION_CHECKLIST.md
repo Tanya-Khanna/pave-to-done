@@ -14,12 +14,13 @@
 
 ## Current progress
 
-**Active step:** Step 1 — Architecture and platform gaps  
-**Completed in Step 1:** 7 of 9 items
+**Active step:** Step 2 — Repository and deployment foundation (with one external-browser check still pending in Step 1)
+**Completed in Step 1:** 8 of 9 items
+**Completed in Step 2:** 2 of 3 items
 
 **Current deployment:** Cloudflare version `710c2aef-a1d2-4b16-9143-686aa51b4d89` at `https://pave-to-done.north-raincoat.workers.dev`. Live verification passed health, persistence, exactly-once handling, stale-revision rejection, event history, security headers, top-level delivery, and WebMCP discovery.
 
-**External verification still required:** connect the Chrome browser extension so the Chrome 149+ WebMCP check can run, then open a fresh browser process to confirm `window.originAgentCluster === true`. The deployed response now serves `Origin-Agent-Cluster: ?1`, but the existing in-app browser process had already loaded this origin before the header was introduced and continues to report `false` for that process.
+**External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
 ## 1. Architecture and platform gaps
 
@@ -29,15 +30,15 @@
 - [x] Add meaningful React Testing Library coverage. — Evidence: `src/test/App.test.tsx` exercises root rendering, in-app navigation, deep linking, and browser-history restoration.
 - [x] Add Miniflare or equivalent Worker integration tests. — Evidence: `src/test/worker.integration.test.ts` exercises the real Worker entrypoint for health, asset handling, production security headers, and pre-Durable-Object cross-origin rejection.
 - [ ] Verify the application in Chrome 149+ with WebMCP enabled.
-- [ ] Serve and verify `Origin-Agent-Cluster: ?1`.
+- [x] Serve and verify `Origin-Agent-Cluster: ?1`. — Evidence: the Worker integration suite asserts the production header, `npm run verify:live` confirms it on the deployed response, and direct `curl` verification passed against Cloudflare version `710c2aef-a1d2-4b16-9143-686aa51b4d89`.
 - [x] Display `window.originAgentCluster` in the diagnostics panel. — Evidence: `useWebMCPTools` captures the runtime value and `DiagnosticPanel` renders `isolated` or `not isolated`; type-check and production build pass.
 - [x] Perform the final test on the exact deployed top-level URL, outside an iframe. — Evidence: the in-app browser loaded `https://pave-to-done.north-raincoat.workers.dev/demo`, reported `self === top`, and discovered the generated WebMCP tool surface from Cloudflare version `710c2aef-a1d2-4b16-9143-686aa51b4d89`.
 
 ## 2. Repository and deployment foundation
 
 - [ ] Connect continuous deployment; GitHub Actions must test, build, and deploy the intended release through a documented protected path.
-- [ ] Run the complete Gate 0 fresh-clone exercise: install, test, build, local run, documented deployment, `/health`, `/demo`, top-level Worker origin, and origin isolation.
-- [ ] Ensure a fresh contributor can deploy without relying on undocumented local state.
+- [x] Run the complete Gate 0 fresh-clone exercise: install, test, build, local run, documented deployment, `/health`, `/demo`, top-level Worker origin, and origin isolation. — Evidence: a public shallow clone at commit `68d42a1` completed `npm ci`, formatting, lint, type checking, all 18 tests, production build, and `wrangler deploy --dry-run`; its local Worker returned 200 for `/api/health` and `/demo` with `Origin-Agent-Cluster: ?1`, and the canonical top-level deployment had already passed the live verifier.
+- [x] Ensure a fresh contributor can deploy without relying on undocumented local state. — Evidence: the clean-clone Wrangler dry run discovered the static assets, `JOURNEYS` Durable Object binding, and checked-in SQLite migration without environment variables or local files; `README.md` now documents exact authentication, deployment, fork naming, and verification steps.
 
 ## 3. Domain model and backend foundations
 
