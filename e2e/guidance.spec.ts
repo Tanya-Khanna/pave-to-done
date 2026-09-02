@@ -51,6 +51,10 @@ test("guidance stays attached after scroll and resize while its coach remains on
   await page.locator(".portal-main").evaluate((element) => element.scrollTo({ top: 40 }));
   await expectOverlayAttached(page, target);
 
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await target.scrollIntoViewIfNeeded();
+  await expectOverlayAttached(page, target);
+
   await page.setViewportSize({ width: 1024, height: 720 });
   await target.scrollIntoViewIfNeeded();
   await expectOverlayAttached(page, target);
