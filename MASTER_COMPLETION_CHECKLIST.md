@@ -14,7 +14,7 @@
 
 ## Current progress
 
-**Active step:** Step 11 — Landing page and visual experience (with Chrome verification pending in Step 1)
+**Active step:** Step 12 — Automated test coverage (with Chrome verification pending in Step 1)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
@@ -25,8 +25,9 @@
 **Completed in Step 8:** 10 of 10 items
 **Completed in Step 9:** 7 of 7 items
 **Completed in Step 10:** 10 of 10 items
+**Completed in Step 11:** 13 of 13 items
 
-**Current implementation deployment:** Cloudflare version `82078cf5-9fc5-4048-be98-03f950cfd4af` from verified GitHub commit `eb27759` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33624039754`, the live protocol verifier, all 77 local unit/integration tests, and all 20 deployed browser tests passed.
+**Current implementation deployment:** Cloudflare version `e78905f4-749f-4a12-95bf-3e848f64c219` from verified GitHub commit `ab1aba9` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33625836208`, the live protocol verifier, all 77 local unit/integration tests, and all 26 deployed browser tests passed.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -161,19 +162,19 @@
 
 ## 11. Landing page and visual experience
 
-- [ ] Add an interactive three-mode preview rather than relying only on static mode cards.
-- [ ] Add the teach-once and on-demand convergence story.
-- [ ] Add a visible healing morph demonstration.
-- [ ] Add a stronger WebMCP proof section showing actual registered tools and shared state.
-- [ ] Add the final conversion CTA specified by the plan.
-- [ ] Add a copyable judge/demo prompt.
-- [ ] Complete route-drawing animation.
-- [ ] Complete human/agent control-baton handoff animation.
-- [ ] Complete semantic-anchor movement animation during healing.
-- [ ] Confirm animations remain smooth under CPU throttling.
-- [ ] Validate that a new visitor understands the product within five seconds.
-- [ ] Verify the primary demo CTA is above the fold at common screen sizes.
-- [ ] Remove ambiguity about which actions belong to the human and which belong to the agent.
+- [x] Add an interactive three-mode preview rather than relying only on static mode cards. — Evidence: each accessible mode button updates a live reimbursement task, ownership sequence, explanation, and moving baton; browser tests operate Show Me and Do It For Me and assert their distinct owners.
+- [x] Add the teach-once and on-demand convergence story. — Evidence: the `TWO STARTS · ONE SAFE RUNTIME` map visibly connects a recorded expert demonstration and a session-only live-capability plan to the same policy, revision, repair, and human-boundary runtime.
+- [x] Add a visible healing morph demonstration. — Evidence: the V1/V2 control moves `expense.create` from a sidebar mock to a header mock while revealing the new human-reviewed field; local and deployed browser tests operate both states and verify opacity, content, and semantic tether.
+- [x] Add a stronger WebMCP proof section showing actual registered tools and shared state. — Evidence: the landing page diagrams human clicks and ChatGPT tool calls converging on authoritative revision 7, then shows real `get_journey`, dynamic `update_mileage_draft`, and prepare-only `prepare_mileage_submission` contracts.
+- [x] Add the final conversion CTA specified by the plan. — Evidence: the final high-contrast section states the guest/no-extension proposition and links `Start in the shared surface` to the working demo; deployed browser tests confirm it is visible.
+- [x] Add a copyable judge/demo prompt. — Evidence: the non-trivial mileage/delegation/repair prompt has a named copy control, a visible `Copied` state, and a deployed clipboard test that reads back the expected text.
+- [x] Complete route-drawing animation. — Evidence: the hero now layers a `route-progress` path with a seven-second stroke-dash draw over the route and synchronizes it with the traveling state marker; the browser test asserts its `route-draw` animation and path length.
+- [x] Complete human/agent control-baton handoff animation. — Evidence: changing modes transitions the baton between labeled YOU and AGENT endpoints in 650 ms; the browser test waits for both positions, measures the movement, and verifies the transition duration.
+- [x] Complete semantic-anchor movement animation during healing. — Evidence: V1→V2 fades and translates the old anchor while promoting the new header anchor, preserves the `expense.create` tether, and separately reveals the material requirement; browser geometry/style assertions pass.
+- [x] Confirm animations remain smooth under CPU throttling. — Evidence: `e2e/landing-experience.spec.ts` applies Chromium 6× CPU throttling, operates the mode handoff and V2 repair morph, and requires both visible state changes within three seconds; the deployed run passes.
+- [x] Validate that a new visitor understands the product within five seconds. — Evidence: in-app browser visual inspection confirmed the first viewport communicates the task, three control levels, healing, and human authority without scrolling; an automated five-second information-scent test requires the headline, concrete lede, three proof points, and primary action to render together and passes locally and deployed.
+- [x] Verify the primary demo CTA is above the fold at common screen sizes. — Evidence: the browser suite measures the CTA at 1440×900, 1280×720, and 390×844 and requires its bottom edge to remain within each first viewport.
+- [x] Remove ambiguity about which actions belong to the human and which belong to the agent. — Evidence: the interactive task labels every sequence step YOU or AGENT, shows the current owner in text, and states that submission never moves; the live demo independently enforces and announces the same ownership policy.
 
 ## 12. Automated test coverage
 

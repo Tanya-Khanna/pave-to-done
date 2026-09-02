@@ -273,8 +273,8 @@ Start testing with this prompt:
 1. ~~Implement speech output for current instruction, warning, and approval summary.~~ ✅
 2. ~~Add microphone input only after capability detection; always show transcript and text field.~~ ✅
 3. ~~Implement design tokens, typography, spacing, responsive shell, and states.~~ ✅
-4. Build landing hero, live mode preview, teach/on-demand convergence, healing morph, WebMCP proof, and CTA.
-5. Add the three signature animations: route drawing, control baton handoff, and semantic-anchor movement.
+4. ~~Build landing hero, live mode preview, teach/on-demand convergence, healing morph, WebMCP proof, and CTA.~~ ✅
+5. ~~Add the three signature animations: route drawing, control baton handoff, and semantic-anchor movement.~~ ✅
 6. ~~Generate social card and capture consistent screenshots from the real app.~~ ✅
 
 **Gate 7:** landing message is understood in five seconds, demo CTA is above the fold, animations remain smooth and optional, and no visual effect hides a broken or ambiguous state.
