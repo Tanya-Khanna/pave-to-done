@@ -14,7 +14,7 @@
 
 ## Current progress
 
-**Active step:** Step 10 — Voice and accessibility (with Chrome verification pending in Step 1)
+**Active step:** Step 11 — Landing page and visual experience (with Chrome verification pending in Step 1)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
@@ -24,8 +24,9 @@
 **Completed in Step 7:** 16 of 16 items
 **Completed in Step 8:** 10 of 10 items
 **Completed in Step 9:** 7 of 7 items
+**Completed in Step 10:** 10 of 10 items
 
-**Current implementation deployment:** Cloudflare version `ae343898-db45-49ef-a54d-df9fd20741bf` from verified GitHub commit `f2cdccd` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33622571965`, the live protocol verifier, all 74 local unit/integration tests, and all 16 deployed browser tests passed.
+**Current implementation deployment:** Cloudflare version `82078cf5-9fc5-4048-be98-03f950cfd4af` from verified GitHub commit `eb27759` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33624039754`, the live protocol verifier, all 77 local unit/integration tests, and all 20 deployed browser tests passed.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -147,16 +148,16 @@
 
 ## 10. Voice and accessibility
 
-- [ ] Add speech output for the current instruction.
-- [ ] Add speech output for repair warnings.
-- [ ] Add speech output for human approval summaries.
-- [ ] Add a visible mute/unmute control.
-- [ ] Test speech-available environments.
-- [ ] Test speech-unavailable environments.
-- [ ] Test reduced-motion mode.
-- [ ] Verify no animation is required to understand state.
-- [ ] Complete keyboard-only testing.
-- [ ] Complete screen-reader labeling and live-region testing.
+- [x] Add speech output for the current instruction. — Evidence: the dock's contextual read control speaks the numbered current step, action, explanation, and control owner from `buildSpokenStatus`; pure and deployed browser tests assert the grounded instruction.
+- [x] Add speech output for repair warnings. — Evidence: repair speech is generated from the live healing assessment, names safe-remap count and material requirements, and states that agent work is paused; the deployed mileage-repair voice journey asserts the actual `vehicleType` warning.
+- [x] Add speech output for human approval summaries. — Evidence: expense and mileage speech read only visible consequence facts and omit the one-time challenge; tests prove the mileage summary includes `$12.06` and speech does not submit it.
+- [x] Add a visible mute/unmute control. — Evidence: the dock renders a persistent labeled mute toggle, cancels active speech when muted, keeps a visible caption/fallback, and the browser test proves muted reads emit nothing until unmuted.
+- [x] Test speech-available environments. — Evidence: `e2e/voice.spec.ts` installs a deterministic Speech Synthesis implementation and verifies instruction, repair, approval, speaking, and mute paths locally and against Cloudflare.
+- [x] Test speech-unavailable environments. — Evidence: the browser suite removes both speech APIs, confirms visible guidance remains, and verifies the app reports `Speech output is unavailable in this browser.` without blocking the journey.
+- [x] Test reduced-motion mode. — Evidence: `e2e/accessibility-responsive.spec.ts` emulates reduced motion, verifies decorative route movement is collapsed, and confirms the primary content and demo action remain visible on the deployed site.
+- [x] Verify no animation is required to understand state. — Evidence: control ownership, current step, risk, source provenance, repair classification, confirmation boundary, and completion are all rendered as text and semantic controls; the reduced-motion browser journey preserves them.
+- [x] Complete keyboard-only testing. — Evidence: `e2e/guidance.spec.ts` completes every Show Me step and the human-only sensitive confirmation through native keyboard focus/activation, ending at verified completion locally and in the deployed suite.
+- [x] Complete screen-reader labeling and live-region testing. — Evidence: the full journey exposes atomic step/control announcements, polite coach and voice states, named agency radios, named speech/pause controls, and an announced verified completion; accessibility browser tests pass against production.
 
 ## 11. Landing page and visual experience
 

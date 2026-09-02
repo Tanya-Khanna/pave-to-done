@@ -270,7 +270,7 @@ Start testing with this prompt:
 
 **Outcome:** a cohesive, memorable product experience wraps the working core.
 
-1. Implement speech output for current instruction, warning, and approval summary.
+1. ~~Implement speech output for current instruction, warning, and approval summary.~~ ✅
 2. ~~Add microphone input only after capability detection; always show transcript and text field.~~ ✅
 3. ~~Implement design tokens, typography, spacing, responsive shell, and states.~~ ✅
 4. Build landing hero, live mode preview, teach/on-demand convergence, healing morph, WebMCP proof, and CTA.
