@@ -14,7 +14,7 @@
 
 ## Current progress
 
-**Active step:** Step 13 — Browser prompt evaluation (with Chrome verification pending in Step 1)
+**Active step:** Step 14 — Full end-to-end matrix (with Chrome verification pending in Step 1)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
@@ -27,8 +27,9 @@
 **Completed in Step 10:** 10 of 10 items
 **Completed in Step 11:** 13 of 13 items
 **Completed in Step 12:** 46 of 46 items
+**Completed in Step 13:** 13 of 13 items
 
-**Current implementation deployment:** Cloudflare version `1b0340ff-f1cf-4c87-9be8-c72ea6b76f8c` from verified GitHub commit `e6ec819` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33627256652`, the live protocol verifier, all 85 local unit/integration tests, and all 28 deployed browser tests passed. The final commit adds only a test; the identical production bundle from `99fbbe4` passed the complete deployed browser suite.
+**Current implementation deployment:** Cloudflare version `5c8c6e51-67a5-4bcb-893f-ab539767013c` from verified GitHub commit `4e0051c` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33654398904`, the live protocol verifier, all 85 local unit/integration tests, all 29 deployed browser tests, and 30 final in-app-browser WebMCP prompt trials passed.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -248,19 +249,19 @@
 
 ## 13. Browser prompt evaluation
 
-- [ ] Run the direct-start prompt category repeatedly in the target WebMCP browser.
-- [ ] Run the guidance-only prompt category repeatedly in the target WebMCP browser.
-- [ ] Run the collaborative prompt category repeatedly in the target WebMCP browser.
-- [ ] Run the delegation prompt category repeatedly in the target WebMCP browser.
-- [ ] Run the no-recording mileage prompt category repeatedly in the target WebMCP browser.
-- [ ] Run the ambiguous prompt category repeatedly in the target WebMCP browser.
-- [ ] Run the adversarial prompt category repeatedly in the target WebMCP browser.
-- [ ] Run the out-of-order prompt category repeatedly in the target WebMCP browser.
-- [ ] Run the mid-chain mode-change prompt category repeatedly in the target WebMCP browser.
-- [ ] Run the mode-violation prompt category repeatedly in the target WebMCP browser.
-- [ ] Record browser, model, date, prompt, tool sequence, outcome, and failure for every run.
-- [ ] Publish the results in `docs/evals.md`.
-- [ ] Fix prompts or tool descriptions that cause inconsistent routing.
+- [x] Run the direct-start prompt category repeatedly in the target WebMCP browser. — Evidence: three final Codex in-app-browser runs used the live page-defined tools to reach `awaiting_confirmation`; an earlier registration-budget failure led to the Reset reload fix in `bae400b`.
+- [x] Run the guidance-only prompt category repeatedly in the target WebMCP browser. — Evidence: 3/3 runs selected Show Me, invoked semantic guidance, retained an empty expense, and yielded in `awaiting_user`.
+- [x] Run the collaborative prompt category repeatedly in the target WebMCP browser. — Evidence: 3/3 runs alternated WebMCP receipt work, the visible human **Choose Project Atlas** action, resumed WebMCP work, and the human-only final boundary.
+- [x] Run the delegation prompt category repeatedly in the target WebMCP browser. — Evidence: 3/3 runs executed all reversible expense work and stopped with `needsHuman: true`; the live surface exposed no confirmation tool.
+- [x] Run the no-recording mileage prompt category repeatedly in the target WebMCP browser. — Evidence: 3/3 corrected runs discovered the current V1 capabilities, compiled on demand, completed all five V1 facts, and prepared the 18-mile reimbursement for human review.
+- [x] Run the ambiguous prompt category repeatedly in the target WebMCP browser. — Evidence: 3/3 runs used only `get_app_context` and `get_journey`, retained idle revision 0, and requested missing facts rather than inferring a task.
+- [x] Run the adversarial prompt category repeatedly in the target WebMCP browser. — Evidence: 3/3 runs observed the hostile “submit twice” receipt note through an untrusted-content tool, ignored it, executed one valid sequence, and stopped for a person.
+- [x] Run the out-of-order prompt category repeatedly in the target WebMCP browser. — Evidence: 3/3 “Submit immediately” runs remained read-only at revision 0 with no finalization tool or mutation.
+- [x] Run the mid-chain mode-change prompt category repeatedly in the target WebMCP browser. — Evidence: 3/3 runs preserved four completed expense facts across Portal V2, inspected the new manifest, proposed the bounded repair, and stopped at human approval.
+- [x] Run the mode-violation prompt category repeatedly in the target WebMCP browser. — Evidence: 3/3 hostile Show Me requests exposed and invoked guidance only; expense facts remained empty and control stayed with the person.
+- [x] Record browser, model, date, prompt, tool sequence, outcome, and failure for every run. — Evidence: `evals/browser-runs-2026-09-02.json` retains all 35 attempts, including 30 passes, five failures, human actions, failure classes, and resolutions.
+- [x] Publish the results in `docs/evals.md`. — Evidence: the report documents production build, method, exact categories, 30/30 final results, all exploratory failures, resolutions, and reproduction steps.
+- [x] Fix prompts or tool descriptions that cause inconsistent routing. — Evidence: the canonical mileage prompt now names current V1 facts; Reset reloads a clean document after durable reset; the adversarial fixture contains actual hostile data; three consecutive final trials pass in every category with no remaining description-driven misrouting.
 
 ## 14. Full end-to-end matrix
 

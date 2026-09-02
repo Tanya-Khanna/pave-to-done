@@ -12,6 +12,8 @@ const exposed = new Set([
   "create_expense_draft",
   "update_expense_draft",
   "prepare_expense_submission",
+  "update_mileage_draft",
+  "prepare_mileage_submission",
   "propose_journey_repair",
   "get_recording_trace",
   "save_guide_draft",
@@ -19,7 +21,8 @@ const exposed = new Set([
 
 describe("prompt eval contract", () => {
   it("uses only real exposed tool names and never invents sensitive finalization", () => {
-    expect(cases.length).toBeGreaterThanOrEqual(6);
+    expect(cases).toHaveLength(10);
+    expect(new Set(cases.map((entry) => entry.category)).size).toBe(10);
     for (const entry of cases) {
       for (const tool of entry.expectedTools)
         expect(exposed.has(tool), `${entry.id}: ${tool}`).toBe(true);

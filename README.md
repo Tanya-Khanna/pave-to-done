@@ -72,7 +72,7 @@ Remove WebMCP and the core loop disappears: the agent can no longer inspect the 
 
 ## WebMCP surface
 
-Thirteen small tools are registered only when they are relevant.
+Fifteen small tools are registered only when they are relevant.
 
 | Scope                             | Tools                                                                                         |
 | --------------------------------- | --------------------------------------------------------------------------------------------- |
@@ -80,6 +80,7 @@ Thirteen small tools are registered only when they are relevant.
 | Choose collaboration policy       | `set_agency_mode` (agents may reduce authority; the visible UI must approve an expansion)     |
 | Plan a task                       | `create_journey`                                                                              |
 | Guide or execute the current step | `show_guidance`, `create_expense_draft`, `update_expense_draft`, `prepare_expense_submission` |
+| Execute an on-demand mileage path | `update_mileage_draft`, `prepare_mileage_submission`                                          |
 | Repair a changed journey          | `propose_journey_repair`                                                                      |
 | Review teaching input             | `get_recording_trace`, `save_guide_draft`                                                     |
 
