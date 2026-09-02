@@ -48,6 +48,7 @@ async function fillMileage(page: Page) {
     "Use customer workshop purpose",
   ])
     await page.getByRole("button", { name: label }).click();
+  await expect(page.getByRole("button", { name: "Prepare mileage for review" })).toBeVisible();
 }
 
 async function lastSpoken(page: Page) {
@@ -95,6 +96,7 @@ test("repair warnings have grounded speech output", async ({ page }) => {
   await startMileage(page);
   await fillMileage(page);
   await page.getByRole("button", { name: "Simulate Portal v2" }).click();
+  await expect(page.getByText("PORTAL CHANGE DETECTED", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Read repair warning aloud" }).click();
   await expect.poll(() => lastSpoken(page)).toContain("Portal change detected");
   expect(await lastSpoken(page)).toContain("vehicleType");
