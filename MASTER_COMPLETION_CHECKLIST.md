@@ -14,17 +14,18 @@
 
 ## Current progress
 
-**Active step:** Step 9 — No-recording and mileage workflow (with Chrome verification pending in Step 1)
+**Active step:** Step 10 — Voice and accessibility (with Chrome verification pending in Step 1)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
-**Completed in Step 4:** 19 of 20 items
+**Completed in Step 4:** 20 of 20 items
 **Completed in Step 5:** 12 of 12 items
 **Completed in Step 6:** 8 of 8 items
 **Completed in Step 7:** 16 of 16 items
 **Completed in Step 8:** 10 of 10 items
+**Completed in Step 9:** 7 of 7 items
 
-**Current deployment:** Cloudflare version `d332463e-617f-45a5-bfe9-4d545a70c596` from verified GitHub commit `864a428` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33600122831`, the live protocol verifier, all 65 local unit/integration tests, and all 14 deployed browser tests passed.
+**Current implementation deployment:** Cloudflare version `ae343898-db45-49ef-a54d-df9fd20741bf` from verified GitHub commit `f2cdccd` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33622571965`, the live protocol verifier, all 74 local unit/integration tests, and all 16 deployed browser tests passed.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -57,9 +58,9 @@
 
 - [x] Make WebMCP schemas single-source and generated. — Evidence: `src/webmcp/toolContracts.ts` generates every JSON Schema from the same Zod validator used at execution time.
 - [x] Enforce `additionalProperties: false` at every object boundary. — Evidence: all validators are strict and `src/test/toolContracts.test.ts` plus `src/test/webmcpLifecycle.test.tsx` recursively inspect every registered object schema.
-- [x] Audit every tool name, description, parameter description, and annotation. — Evidence: the lifecycle test reaches all 13 state-dependent and route tools, asserts the exact public name set, validates closed schemas, and requires explicit read-only, destructive, idempotent, and open-world annotations.
+- [x] Audit every tool name, description, parameter description, and annotation. — Evidence: the lifecycle test reaches all 15 state-dependent and route tools across expense, mileage, repair, and recording states; it asserts the exact public name set, validates closed schemas, and requires explicit read-only, destructive, idempotent, and open-world annotations.
 - [x] Keep tool descriptions below roughly 500 characters and parameter descriptions below roughly 150 characters. — Evidence: lifecycle tests enforce 500 characters for every registered tool; schema tests recursively enforce 150 characters for every generated parameter description.
-- [ ] Add appropriate numeric and string bounds, including mileage inputs.
+- [x] Add appropriate numeric and string bounds, including mileage inputs. — Evidence: the canonical strict validators bound text fields and expense amounts; the mileage tool schema and domain command constrain distance to 0.1–1,000 miles, `src/test/toolContracts.test.ts` proves schema/runtime agreement, and `src/test/mileageJourney.test.ts` proves out-of-range commands cannot mutate state.
 - [x] Make every normal tool result include `ok`, `operationId`, `revision`, `changed`, `summary`, `next`, and useful grounded error details when rejected. — Evidence: `src/webmcp/resultFormat.ts` owns the uniform read, success, and rejection envelopes; `src/test/resultFormat.test.ts` verifies all required fields and grounded stale-revision details.
 - [x] Explicitly identify the next human or agent control boundary in results. — Evidence: `nextControlBoundary` identifies the actor, action, and reason for active, repair, confirmation, idle, and completed states.
 - [x] Keep normal tool results around 1.5 KB. — Evidence: result-format tests enforce a 1,500-byte serialized ceiling for representative read and mutation results.
@@ -136,13 +137,13 @@
 
 ## 9. No-recording and mileage workflow
 
-- [ ] Build a genuine second task for the no-recording path.
-- [ ] Add mileage-specific capabilities and fixtures.
-- [ ] Validate the generated session plan against the live capability manifest.
-- [ ] Do not reuse the expense task while merely relabeling it as mileage.
-- [ ] Demonstrate a different task starting successfully without a pre-existing guide.
-- [ ] Confirm the session-only plan is not presented as a published guide.
-- [ ] Demonstrate Show Me, With Me, For Me, and healing on the no-recording path where applicable.
+- [x] Build a genuine second task for the no-recording path. — Evidence: `src/domain/compiler.ts` compiles a seven-step route, policy, calculation, and reimbursement workflow backed by its own `MileageProjection`; the deployed browser journey completes it and produces a `MILE-*` reimbursement rather than an expense.
+- [x] Add mileage-specific capabilities and fixtures. — Evidence: `src/domain/manifests.ts` defines separate V1/V2 mileage manifests and `src/domain/fixtures.ts` owns the typed route, distance, purpose, vehicle, date, and reimbursement-rate facts.
+- [x] Validate the generated session plan against the live capability manifest. — Evidence: `StartJourney` compiles against `getManifest(portalVersion)` and rejects a plan unless `validateJourneyPlan` verifies every capability, risk, anchor, required field, actor permission, and duplicate; focused tests prove both valid and unknown-capability cases.
+- [x] Do not reuse the expense task while merely relabeling it as mileage. — Evidence: mileage has its own projection, commands, events, capability IDs, semantic anchors, UI form, calculation, confirmation kind, completion ID, WebMCP tools, two manifest versions, and browser suite; the test asserts every compiled capability begins with `mileage.` and the expense projection remains empty.
+- [x] Demonstrate a different task starting successfully without a pre-existing guide. — Evidence: the public demo's `On demand` path starts “Create an 18-mile mileage reimbursement…” and `e2e/mileage.spec.ts` completes it against the deployed Cloudflare application.
+- [x] Confirm the session-only plan is not presented as a published guide. — Evidence: its source remains `{ kind: "on-demand" }`, the UI labels it exactly `Planned for this session`, and it is absent from the bounded published-guide fixture/list; the deployed browser test asserts the session-only label before starting.
+- [x] Demonstrate Show Me, With Me, For Me, and healing on the no-recording path where applicable. — Evidence: `src/test/mileageJourney.test.ts` completes mileage in all three policies with human-only submission and runs V2 healing in all three; `e2e/mileage.spec.ts` verifies full human execution and material distance-anchor/new-vehicle repair on the deployed site. Release gate `33622571965`, live protocol verification, and all 16 deployed browser tests passed for commit `f2cdccd` and Cloudflare version `ae343898-db45-49ef-a54d-df9fd20741bf`.
 
 ## 10. Voice and accessibility
 

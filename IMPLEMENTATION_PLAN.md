@@ -261,7 +261,7 @@ Start testing with this prompt:
 4. ~~Implement `get_recording_trace` with `untrustedContentHint`.~~ ✅
 5. ~~Implement `save_guide_draft`; keep publication human-only.~~ ✅
 6. ~~Implement a deterministic ordered-event draft when an agent is unavailable; the trace and draft remain server-backed.~~ ✅
-7. Validate `create_journey` against live capability IDs for an on-demand mileage task.
+7. ~~Validate `create_journey` against live capability IDs for an on-demand mileage task.~~ ✅
 8. ~~Label recorded, draft, and session-only sources precisely.~~ ✅
 
 **Gate 6:** an expert can record a short flow, an agent can turn it into a visible draft, a person can publish it, and a different task can start without a guide.
