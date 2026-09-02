@@ -14,7 +14,7 @@
 
 ## Current progress
 
-**Active step:** Step 14 — Full end-to-end matrix (with Chrome verification pending in Step 1)
+**Active step:** Step 15 — Performance and visual quality (with Chrome verification pending in Step 1)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
@@ -28,8 +28,9 @@
 **Completed in Step 11:** 13 of 13 items
 **Completed in Step 12:** 46 of 46 items
 **Completed in Step 13:** 13 of 13 items
+**Completed in Step 14:** 12 of 12 items
 
-**Current implementation deployment:** Cloudflare version `5c8c6e51-67a5-4bcb-893f-ab539767013c` from verified GitHub commit `4e0051c` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33654398904`, the live protocol verifier, all 85 local unit/integration tests, all 29 deployed browser tests, and 30 final in-app-browser WebMCP prompt trials passed.
+**Current implementation deployment:** Cloudflare version `eb501345-720e-40a9-80f9-6e4d6c37076f` from verified GitHub commit `3796d51` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33656117860`, the live protocol verifier, all 91 local unit/integration tests, all 30 deployed browser tests, and 30 final in-app-browser WebMCP prompt trials passed.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -265,18 +266,18 @@
 
 ## 14. Full end-to-end matrix
 
-- [ ] Test three modes against the V1 portal.
-- [ ] Test three modes against a cosmetic portal change.
-- [ ] Test three modes against a material portal change.
-- [ ] Test all six directed mode transitions.
-- [ ] Test recorded-guide and on-demand flows.
-- [ ] Test WebMCP available and unavailable.
-- [ ] Test speech available and unavailable.
-- [ ] Test keyboard and reduced-motion modes.
-- [ ] Test reset and refresh.
-- [ ] Test concurrent, double-clicked, and canceled actions.
-- [ ] Test route-change tool unregistration.
-- [ ] Test Worker restart and persistence.
+- [x] Test three modes against the V1 portal. — Evidence: `src/test/agencyModes.test.ts` completes Show Me, With Me, and For Me from reset through verified submission on `expense.v1`, checking the promised control split and final projection.
+- [x] Test three modes against a cosmetic portal change. — Evidence: the healing matrix moves a live semantic anchor in Show Me, With Me, and For Me, verifies a safe remap with no material changes, and compares all completed facts.
+- [x] Test three modes against a material portal change. — Evidence: `src/test/healingEngine.test.ts` runs V1→V2 in every mode, requires proposal plus human approval, preserves all facts, assigns the new field correctly, and resumes at preparation.
+- [x] Test all six directed mode transitions. — Evidence: the agency table covers Show→With, Show→For, With→Show, With→For, For→Show, and For→With with complete-state preservation assertions.
+- [x] Test recorded-guide and on-demand flows. — Evidence: expense agency and recording suites exercise the reviewed guide; mileage unit, deployed browser, and live WebMCP evals exercise a no-guide on-demand compilation.
+- [x] Test WebMCP available and unavailable. — Evidence: 30 in-app-browser trials invoke native page-defined WebMCP tools; the Playwright manual journey completes the same product path with `document.modelContext` absent.
+- [x] Test speech available and unavailable. — Evidence: `e2e/voice.spec.ts` stubs speech support and absence, proving spoken instructions/mute behavior and the visible fallback; both pass on the deployed build.
+- [x] Test keyboard and reduced-motion modes. — Evidence: deployed guidance tests complete the journey using keyboard activation and responsive tests verify decorative motion collapses under `prefers-reduced-motion` without hiding content.
+- [x] Test reset and refresh. — Evidence: `e2e/persistence.spec.ts` preserves confirmation and completion over reload, then verifies Reset creates an idle journey in a fresh browser document.
+- [x] Test concurrent, double-clicked, and canceled actions. — Evidence: coordinator tests serialize two same-revision commands; the deployed browser sends two synchronous Start clicks and stores one event; client tests cover cancellation before and after possible commit.
+- [x] Test route-change tool unregistration. — Evidence: `src/test/webmcpLifecycle.test.tsx` disables the WebMCP route and verifies every route/state registration signal is aborted.
+- [x] Test Worker restart and persistence. — Evidence: a new `JourneyCoordinator` instance reads the prior revision from shared durable storage; deployed reload and cross-tab tests observe the same authoritative state.
 
 ## 15. Performance and visual quality
 
