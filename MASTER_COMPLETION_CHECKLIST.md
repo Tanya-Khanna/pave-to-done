@@ -14,7 +14,7 @@
 
 ## Current progress
 
-**Active step:** Step 12 — Automated test coverage (with Chrome verification pending in Step 1)
+**Active step:** Step 13 — Browser prompt evaluation (with Chrome verification pending in Step 1)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
@@ -26,8 +26,9 @@
 **Completed in Step 9:** 7 of 7 items
 **Completed in Step 10:** 10 of 10 items
 **Completed in Step 11:** 13 of 13 items
+**Completed in Step 12:** 46 of 46 items
 
-**Current implementation deployment:** Cloudflare version `e78905f4-749f-4a12-95bf-3e848f64c219` from verified GitHub commit `ab1aba9` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33625836208`, the live protocol verifier, all 77 local unit/integration tests, and all 26 deployed browser tests passed.
+**Current implementation deployment:** Cloudflare version `1b0340ff-f1cf-4c87-9be8-c72ea6b76f8c` from verified GitHub commit `e6ec819` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33627256652`, the live protocol verifier, all 85 local unit/integration tests, and all 28 deployed browser tests passed. The final commit adds only a test; the identical production bundle from `99fbbe4` passed the complete deployed browser suite.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -180,70 +181,70 @@
 
 ### Journey and policy tests
 
-- [ ] Show Me rejects every agent domain mutation.
-- [ ] With Me only permits the current reversible agent-assigned step.
-- [ ] For Me rejects sensitive agent execution.
-- [ ] All six mode transitions preserve valid state.
-- [ ] Out-of-order commands do not mutate state.
-- [ ] Repair and confirmation states block inappropriate progression.
+- [x] Show Me rejects every agent domain mutation. — Evidence: `src/test/agencyModes.test.ts` attempts every expense-domain mutation as an agent at its current Show Me step and compares the unchanged snapshot after each policy rejection.
+- [x] With Me only permits the current reversible agent-assigned step. — Evidence: `src/test/agencyModes.test.ts` permits assigned receipt extraction, denies the human-owned project judgment, rejects an out-of-order prior field, and permits the next assigned category step.
+- [x] For Me rejects sensitive agent execution. — Evidence: `src/test/agencyModes.test.ts` lets the agent complete every reversible expense step, then proves agent confirmation returns `POLICY_DENIED` without changing state.
+- [x] All six mode transitions preserve valid state. — Evidence: the table-driven agency suite covers Show→With, Show→For, With→Show, With→For, For→Show, and For→With while comparing the complete projection and completed capabilities.
+- [x] Out-of-order commands do not mutate state. — Evidence: the agency suite attempts `expense.project` while `expense.date` is current, receives `PRECONDITION_FAILED`, and verifies the projection is unchanged.
+- [x] Repair and confirmation states block inappropriate progression. — Evidence: `src/test/agencyModes.test.ts` and `src/test/healingEngine.test.ts` prove ordinary progression returns `REPAIR_REQUIRED` or `AWAITING_HUMAN` until the corresponding person-controlled boundary resolves.
 
 ### Healing tests
 
-- [ ] V1 capability maps to a V2 semantic anchor.
-- [ ] Removed capability blocks.
-- [ ] An already-satisfied postcondition skips safely.
-- [ ] A newly required field creates a repair.
-- [ ] Repair cannot downgrade sensitive to reversible.
-- [ ] Rejected repair preserves state and stops.
+- [x] V1 capability maps to a V2 semantic anchor. — Evidence: `src/test/healingEngine.test.ts` compiles a changed capability ID through its surviving anchor and verifies the remapped ID, anchor, and current step.
+- [x] Removed capability blocks. — Evidence: the pure healing suite removes a required capability and verifies a blocked assessment with a grounded reason.
+- [x] An already-satisfied postcondition skips safely. — Evidence: the compiler receives an already-populated project fact and marks the corresponding proposed step complete.
+- [x] A newly required field creates a repair. — Evidence: the suite evaluates real Portal V1→V2 manifests in all three modes and finds `expense.businessPurpose` as the current material repair step.
+- [x] Repair cannot downgrade sensitive to reversible. — Evidence: healing tests block risk increases, block expanded agent authority, keep agent-ineligible work human-owned, and reject a tampered repair assignment.
+- [x] Rejected repair preserves state and stops. — Evidence: both `src/test/healingEngine.test.ts` and deployed `e2e/healing.spec.ts` compare preserved facts after rejection and prove the prepare action remains unavailable.
 
 ### Recording tests
 
-- [ ] Recording only starts explicitly.
-- [ ] Capture redacts sensitive data.
-- [ ] Drafts contain registered capabilities only.
-- [ ] Agents cannot publish.
+- [x] Recording only starts explicitly. — Evidence: `src/test/recordingEngine.test.ts` proves ordinary actions do not create a trace before the human sends `StartRecording`.
+- [x] Capture redacts sensitive data. — Evidence: recording tests execute before/after snapshots containing receipt details and confirmation data, then verify the retained trace contains only allowlisted semantic fields and narration.
+- [x] Drafts contain registered capabilities only. — Evidence: the recording suite accepts a deterministic draft made solely from registered capabilities and rejects an injected unknown capability.
+- [x] Agents cannot publish. — Evidence: recording tests deny `PublishGuide` for the agent without mutation and permit publication only from the visible human UI actor.
 
 ### Tool-handler tests
 
-- [ ] Strict input validation.
-- [ ] Bounded result size.
-- [ ] Fresh-state execution.
-- [ ] Prepare-only confirmation behavior.
-- [ ] Correct read/write/destructive annotations.
-- [ ] Unregister on abort, route change, and unmount.
-- [ ] Dynamic registration without duplicates.
-- [ ] Cancellation and ambiguous-result reconciliation.
+- [x] Strict input validation. — Evidence: `src/test/toolContracts.test.ts` verifies generated closed JSON Schemas, field bounds, rejected extra properties, and agreement with the runtime Zod parsers.
+- [x] Bounded result size. — Evidence: `src/test/resultFormat.test.ts` enforces a 1,500-byte ceiling for representative read and mutation results; trace and event collections are independently bounded.
+- [x] Fresh-state execution. — Evidence: `src/test/webmcpLifecycle.test.tsx` advances the snapshot to revision 3 after registration and observes revision 3 when invoking the still-registered route tool.
+- [x] Prepare-only confirmation behavior. — Evidence: the lifecycle suite proves no confirmation tool exists, while the approval and agency tests prove preparation stops at `awaiting_confirmation` for visible human action.
+- [x] Correct read/write/destructive annotations. — Evidence: the complete 15-tool lifecycle audit requires explicit read-only, destructive, idempotent, and open-world hints for every registered tool.
+- [x] Unregister on abort, route change, and unmount. — Evidence: `src/test/webmcpLifecycle.test.tsx` verifies the exact AbortSignal lifecycle, aborts all registrations when the WebMCP route is disabled, and proves every registration is aborted on Strict Mode unmount.
+- [x] Dynamic registration without duplicates. — Evidence: lifecycle tests traverse idle, active, repair, recording, expense, and mileage states and require one active registration per name under React Strict Mode.
+- [x] Cancellation and ambiguous-result reconciliation. — Evidence: `src/test/journeyClient.test.ts` proves cancellation reaches `fetch`, looks up the idempotency result, returns the authoritative committed result when present, and surfaces `AMBIGUOUS_OUTCOME` when absent.
 
 ### Persistence and protocol tests
 
-- [ ] Duplicate operation ID creates no second event.
-- [ ] Two commands against one revision produce one stale-revision rejection.
-- [ ] Event replay reconstructs the exact snapshot.
-- [ ] A tampered chain blocks progression.
-- [ ] Expired or replayed confirmation challenge fails.
-- [ ] The trail shows accepted events only.
-- [ ] Logs and results redact identifiers, challenges, receipt content, and upstream payloads.
+- [x] Duplicate operation ID creates no second event. — Evidence: `src/test/JourneyCoordinator.test.ts` resends one operation ID, receives `deduplicated: true` at the original revision, and reads exactly one persisted event.
+- [x] Two commands against one revision produce one stale-revision rejection. — Evidence: the in-memory Durable Object concurrency test sends two mode changes concurrently at revision 1 and observes exactly one success plus one `STALE_REVISION` at revision 2.
+- [x] Event replay reconstructs the exact snapshot. — Evidence: `src/test/replay.property.test.ts` generates arbitrary valid mode sequences and compares the replayed snapshot structurally with the stored snapshot.
+- [x] A tampered chain blocks progression. — Evidence: the replay suite changes a hashed event payload and verifies the reconstructed session is blocked with `historyVerified: false`.
+- [x] Expired or replayed confirmation challenge fails. — Evidence: `src/test/journeyEngine.test.ts` uses a controlled clock to reject a six-minute-old challenge, accepts it once before expiry, rejects replay, and compares unchanged state after each rejection.
+- [x] The trail shows accepted events only. — Evidence: the concurrent coordinator test persists two accepted revisions while retaining the rejected stale command only as its operation result; the event endpoint returns exactly those two accepted events.
+- [x] Logs and results redact identifiers, challenges, receipt content, and upstream payloads. — Evidence: `src/test/logging.test.ts`, `src/test/resultFormat.test.ts`, and `src/test/recordingEngine.test.ts` feed each prohibited value through the relevant boundary and prove it is absent from serialized output.
 
 ### Property-based invariants
 
-- [ ] Revisions are monotonic.
-- [ ] Operations apply at most once.
-- [ ] Sensitive actions are never executed by an agent.
-- [ ] Progress never crosses an unapproved repair.
-- [ ] Completed facts persist except after reset.
-- [ ] Replay equals stored state.
-- [ ] Hash-chain verification detects tampering.
-- [ ] Migrations never expand authority.
+- [x] Revisions are monotonic. — Evidence: the fast-check replay property generates up to 20 mode changes and requires the emitted revision sequence to equal every integer from 1 through the final event count.
+- [x] Operations apply at most once. — Evidence: the coordinator idempotency test proves retrying an arbitrary UUID returns the stored result and creates no second event; the live protocol verifier independently confirms exactly-once behavior on Cloudflare.
+- [x] Sensitive actions are never executed by an agent. — Evidence: the exhaustive policy suite attempts sensitive submission in all agency modes and at the prepared boundary; every agent attempt is rejected without mutation.
+- [x] Progress never crosses an unapproved repair. — Evidence: healing tests attempt preparation before a proposal and again before approval; both return `REPAIR_REQUIRED`, with the repaired step becoming current only after human approval.
+- [x] Completed facts persist except after reset. — Evidence: a fast-check property completes the expense date, generates arbitrary mode changes, and verifies the date and completed step after every transition; reset behavior is separately covered by the domain suite.
+- [x] Replay equals stored state. — Evidence: fast-check rebuilds each generated valid event sequence and requires complete snapshot equality plus `historyVerified: true`.
+- [x] Hash-chain verification detects tampering. — Evidence: the tamper property alters hashed safe payload data and verifies replay blocks the session.
+- [x] Migrations never expand authority. — Evidence: the healing compiler suite blocks a manifest that adds agent authority and converts constrained work back to human ownership in delegated mode.
 
 ### Worker and fault tests
 
-- [ ] A domain mutation atomically commits snapshot, event, and idempotency record.
-- [ ] Cancellation before commit creates no event.
-- [ ] A lost response after commit reconciles correctly.
-- [ ] Refresh during confirmation behaves safely.
-- [ ] Multiple tabs converge.
-- [ ] Worker restart and reload preserve state.
-- [ ] Validate request-size limits, origin checks, rate limiting, CSP, Permissions Policy, and Origin-Agent-Cluster headers.
+- [x] A domain mutation atomically commits snapshot, event, and idempotency record. — Evidence: `src/test/JourneyCoordinator.test.ts` executes the real transaction path and inspects all three staged keys at the same committed revision.
+- [x] Cancellation before commit creates no event. — Evidence: the client cancellation test simulates an abort before request delivery, finds no authoritative operation at the operation endpoint, and returns an explicit ambiguous outcome instead of claiming a mutation.
+- [x] A lost response after commit reconciles correctly. — Evidence: `src/test/journeyClient.test.ts` aborts the first response, returns the authoritative stored operation on lookup, and verifies `reconciled: true` at the committed revision.
+- [x] Refresh during confirmation behaves safely. — Evidence: deployed `e2e/persistence.spec.ts` reloads at the expiring human boundary, verifies the exact amount and project, completes once, reloads again, and observes durable verified completion.
+- [x] Multiple tabs converge. — Evidence: deployed `e2e/persistence.spec.ts` opens two tabs on one guest session, starts from tab one, advances from tab two, and observes each revision propagate to the other through the shared authoritative journey.
+- [x] Worker restart and reload preserve state. — Evidence: the coordinator persistence test reconstructs a new Durable Object instance over the same storage and reads the prior revision; the browser persistence test proves the same behavior across UI reloads and the retention alarm test proves deliberate expiry.
+- [x] Validate request-size limits, origin checks, rate limiting, CSP, Permissions Policy, and Origin-Agent-Cluster headers. — Evidence: coordinator tests verify 413 and pre-transaction 429 behavior; `src/test/worker.integration.test.ts` proves cross-origin rejection and all named headers; `npm run verify:live` passed the same protocol and header assertions on Cloudflare version `1b0340ff-f1cf-4c87-9be8-c72ea6b76f8c`.
 
 ## 13. Browser prompt evaluation
 
