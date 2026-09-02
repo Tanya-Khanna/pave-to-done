@@ -71,3 +71,23 @@ test("reset starts a fresh document so WebMCP registration limits also reset", a
     ),
   ).toBe("reload");
 });
+
+test("a double-clicked start accepts one journey and records one start event", async ({ page }) => {
+  await page.goto("/demo");
+  await page
+    .getByRole("button", { name: "Start shared journey" })
+    .evaluate((button: HTMLButtonElement) => {
+      button.click();
+      button.click();
+    });
+
+  await expect(page.getByText("STEP 01 / 06")).toBeVisible();
+  const startEvents = await page.evaluate(async () => {
+    const sessionId = sessionStorage.getItem("pave.session.v1")!;
+    const payload = (await fetch(`/api/sessions/${sessionId}/events`).then((response) =>
+      response.json(),
+    )) as { events: Array<{ type: string }> };
+    return payload.events.filter((event) => event.type === "JourneyStarted").length;
+  });
+  expect(startEvents).toBe(1);
+});

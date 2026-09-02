@@ -259,6 +259,41 @@ describe("pure manifest healing compiler", () => {
       });
     }
   });
+
+  it.each(["show", "with", "for"] as const)(
+    "preserves progress through a purely cosmetic anchor change in %s mode",
+    async (mode) => {
+      const snapshot = await readyForPortalChange(mode);
+      const cosmetic = structuredClone(portalV1Manifest);
+      cosmetic.version = "manifest.expense.cosmetic-v2";
+      const moved = cosmetic.capabilities.find((item) => item.id === "expense.date")!;
+      moved.version = "2";
+      moved.anchorKey = "expense.receiptDate.v2";
+
+      const result = compileHealing({
+        snapshot,
+        sourceManifest: portalV1Manifest,
+        currentManifest: cosmetic,
+        mode,
+      });
+
+      expect(result.overall).toBe("remapped");
+      expect(result.materialChanges).toHaveLength(0);
+      expect(result.safeRemaps).toContainEqual(
+        expect.objectContaining({
+          capabilityId: "expense.date",
+          from: "expense.date",
+          to: "expense.receiptDate.v2",
+        }),
+      );
+      expect(snapshot.expense).toMatchObject({
+        date: "2026-08-31",
+        amount: 86,
+        project: "Project Atlas",
+        category: "Client meal",
+      });
+    },
+  );
 });
 
 describe("server-enforced healing workflow", () => {
@@ -357,6 +392,47 @@ describe("server-enforced healing workflow", () => {
     ).snapshot;
     expect(state.expense.businessPurpose).toContain("Project Atlas");
   });
+
+  it.each(["show", "with", "for"] as const)(
+    "completes a human-reviewed material repair without losing facts in %s mode",
+    async (mode) => {
+      let state = await readyForPortalChange(mode);
+      const before = structuredClone(state.expense);
+      state = (await apply(state, { type: "ChangePortalVersion", version: "expense.v2" }, human))
+        .snapshot;
+      state = (
+        await apply(
+          state,
+          { type: "ProposeRepair", businessPurpose: "Client dinner after Project Atlas workshop" },
+          agent,
+        )
+      ).snapshot;
+      state = (
+        await apply(state, { type: "ApproveRepair", repairId: state.pendingRepair!.id }, human)
+      ).snapshot;
+
+      expect(state.expense).toEqual(before);
+      expect(state.steps.find((step) => step.status === "current")).toMatchObject({
+        capabilityId: "expense.businessPurpose",
+        assignedActor: mode === "show" ? "human" : "agent",
+      });
+      state = (
+        await apply(
+          state,
+          {
+            type: "UpdateExpenseDraft",
+            field: "businessPurpose",
+            value: "Client dinner after Project Atlas workshop",
+          },
+          mode === "show" ? human : agent,
+        )
+      ).snapshot;
+      expect(state.steps.find((step) => step.status === "current")?.capabilityId).toBe(
+        "expense.prepare",
+      );
+      expect(state.expense).toMatchObject({ ...before, businessPurpose: expect.any(String) });
+    },
+  );
 
   it.each([
     "lower risk",
