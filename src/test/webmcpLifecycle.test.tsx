@@ -82,6 +82,33 @@ describe("WebMCP registration lifecycle", () => {
     expect(registrations.every(({ signal }) => signal?.aborted)).toBe(true);
   });
 
+  it("aborts every registration when navigation leaves the WebMCP-enabled route", async () => {
+    const registrations: Array<{ tool: WebMCPTool; signal?: AbortSignal }> = [];
+    Object.defineProperty(document, "modelContext", {
+      configurable: true,
+      value: {
+        registerTool: vi.fn(async (tool: WebMCPTool, options?: { signal?: AbortSignal }) => {
+          registrations.push({ tool, signal: options?.signal });
+        }),
+      },
+    });
+    const snapshot = createInitialSnapshot("route-session");
+    const command = vi.fn<() => Promise<CommandResult>>();
+
+    function Harness({ enabled }: { enabled: boolean }) {
+      const snapshotRef = useRef<JourneySnapshot | null>(snapshot);
+      useWebMCPTools({ snapshot, snapshotRef, command, enabled });
+      return null;
+    }
+
+    const view = render(<Harness enabled />);
+    await waitFor(() =>
+      expect(registrations.filter(({ signal }) => !signal?.aborted)).toHaveLength(6),
+    );
+    view.rerender(<Harness enabled={false} />);
+    await waitFor(() => expect(registrations.every(({ signal }) => signal?.aborted)).toBe(true));
+  });
+
   it("registers the complete bounded tool surface with audited metadata", async () => {
     const registrations: Array<{ tool: WebMCPTool; signal?: AbortSignal }> = [];
     Object.defineProperty(document, "modelContext", {
