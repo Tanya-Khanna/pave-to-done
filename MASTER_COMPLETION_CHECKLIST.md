@@ -14,15 +14,16 @@
 
 ## Current progress
 
-**Active step:** Step 7 — Self-healing engine (with Chrome verification pending in Step 1 and mileage bounds deferred from Step 4 to Step 9)
+**Active step:** Step 8 — Teach once and recording (with Chrome verification pending in Step 1 and mileage bounds deferred from Step 4 to Step 9)
 **Completed in Step 1:** 8 of 9 items
 **Completed in Step 2:** 3 of 3 items
 **Completed in Step 3:** 4 of 4 items
 **Completed in Step 4:** 19 of 20 items
 **Completed in Step 5:** 12 of 12 items
 **Completed in Step 6:** 8 of 8 items
+**Completed in Step 7:** 16 of 16 items
 
-**Current deployment:** Cloudflare version `078bd430-1148-4be9-8819-bfbeda9c2430` from verified GitHub commit `e99fb6d` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33596890592`, the live protocol verifier, and all 12 deployed browser tests passed.
+**Current deployment:** Cloudflare version `aeb8eab9-94cc-4ce5-96da-50d006facd55` from verified GitHub commit `5b165f2` at `https://pave-to-done.north-raincoat.workers.dev`. GitHub release gate `33598613004`, the live protocol verifier, all 59 local unit/integration tests, and all 13 deployed browser tests passed.
 
 **External verification still required:** reconnect the separate Chrome test window so the Chrome 149+ WebMCP check can run. The user's everyday Chrome profile must not be changed. The deployed response serves `Origin-Agent-Cluster: ?1`; `curl`, Worker integration tests, and the live verifier all confirm the header. The current in-app browser process loaded this origin before the header was introduced and continues to report `false` for that already-allocated process.
 
@@ -102,22 +103,22 @@
 
 ## 7. Self-healing engine
 
-- [ ] Implement a pure generic compiler that compares the guide with source and current capability manifests.
-- [ ] Detect manifest-version changes before every step transition.
-- [ ] Classify every step as compatible, safely remapped, repair required, or blocked.
-- [ ] Treat any risk increase as blocking.
-- [ ] Build a safe-remap path that moves guidance to the new semantic anchor without losing progress.
-- [ ] Make server validation reject any repair that lowers risk, expands agent authority, turns an agent-ineligible action into an agent action, removes required outcomes, or modifies completed events.
-- [ ] Verify repair rejection preserves the original state and stops progression.
-- [ ] Verify the same healing system works in Show Me, With Me, and For Me.
-- [ ] Test capability-ID change with a surviving semantic anchor.
-- [ ] Test a removed capability.
-- [ ] Test an already-satisfied postcondition.
-- [ ] Test a newly required field.
-- [ ] Test a cosmetic portal change.
-- [ ] Test a material portal change.
-- [ ] Test user rejection of a repair.
-- [ ] Verify autonomous work remains blocked until material repair approval.
+- [x] Implement a pure generic compiler that compares the guide with source and current capability manifests. — Evidence: `src/domain/healingCompiler.ts` exports a side-effect-free `compileHealing` function over a snapshot, source manifest, and current manifest; focused tests supply synthetic manifests rather than portal-specific branches.
+- [x] Detect manifest-version changes before every step transition. — Evidence: the shared `requireActive` guard compares the snapshot manifest to the live portal manifest before guidance or mutation, and the healing suite proves a stale version blocks progression.
+- [x] Classify every step as compatible, safely remapped, repair required, or blocked. — Evidence: `HealingStepClassification` records one of the four dispositions plus source/target risk, anchor, agent eligibility, and postcondition state; compiler tests exercise all four outcomes.
+- [x] Treat any risk increase as blocking. — Evidence: the generic compiler compares ordered risk ranks and the removed/risk test proves reversible-to-sensitive produces a blocked assessment.
+- [x] Build a safe-remap path that moves guidance to the new semantic anchor without losing progress. — Evidence: the compiler resolves by ID, semantic anchor, or alias; `PortalVersionChanged` and repair evolution remap the active guidance anchor while retaining the expense projection and completed steps.
+- [x] Make server validation reject any repair that lowers risk, expands agent authority, turns an agent-ineligible action into an agent action, removes required outcomes, or modifies completed events. — Evidence: `validateRepair` binds proposals to session, revision, manifests, classifications, risks, authority, required outcomes, and completed steps; table-driven tampering tests plus the human-only reversible-capability regression test cover every rejection.
+- [x] Verify repair rejection preserves the original state and stops progression. — Evidence: the domain test compares the unchanged expense projection after `RejectRepair`, and the local and deployed rejection browser journey shows `JOURNEY STOPPED` with Project Atlas preserved and progression absent.
+- [x] Verify the same healing system works in Show Me, With Me, and For Me. — Evidence: the material-change compiler test runs against all three modes and verifies the same new requirement with mode-correct ownership; the common server transition guard applies to every mode.
+- [x] Test capability-ID change with a surviving semantic anchor. — Evidence: the synthetic manifest test remaps `task.value` to `task.value.v2` through the unchanged semantic anchor and retains the current step.
+- [x] Test a removed capability. — Evidence: the synthetic manifest test removes the current capability and receives a blocked assessment with a grounded reason.
+- [x] Test an already-satisfied postcondition. — Evidence: the compiler test begins with Project Atlas already stored and marks the mapped step complete rather than replaying it.
+- [x] Test a newly required field. — Evidence: V2 inserts `expense.businessPurpose` in manifest order and the all-mode test verifies it becomes the current material requirement.
+- [x] Test a cosmetic portal change. — Evidence: the anchor-remap test changes `sidebar.action` to `header.action`, returns `remapped`, and preserves the existing amount.
+- [x] Test a material portal change. — Evidence: domain and browser tests switch the working V1 expense to V2, preserve completed facts, require an agent proposal and visible human approval, then resume at business purpose.
+- [x] Test user rejection of a repair. — Evidence: `RejectRepair` is human-UI-only; the deployed browser test rejects the proposal, preserves the draft, and exposes reset as the next action.
+- [x] Verify autonomous work remains blocked until material repair approval. — Evidence: preparation is denied both before and after the agent proposal; WebMCP mutation tools remain unavailable at the repair boundary, and only visible human approval resumes the journey.
 
 ## 8. Teach once and recording
 
