@@ -10,7 +10,7 @@ test("the demo exposes a visible keyboard focus and a live journey status", asyn
   const outline = await back.evaluate((node) => getComputedStyle(node).outlineStyle);
   expect(outline).not.toBe("none");
 
-  await page.getByRole("button", { name: "Start shared journey" }).click();
+  await page.getByRole("button", { name: "Start guiding me" }).click();
   await expect(page.getByRole("status").filter({ hasText: /Step 1 of 6/ })).toHaveText(
     /Control is with/,
   );

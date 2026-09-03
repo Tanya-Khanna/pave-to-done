@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { fillMileage, startMileage as startMileageTask } from "./journey-actions";
 
 async function agentCommand(page: Page, command: Record<string, unknown>) {
   return page.evaluate(async (nextCommand) => {
@@ -21,24 +22,8 @@ async function agentCommand(page: Page, command: Record<string, unknown>) {
 async function startMileage(page: Page, mode: "Show me" | "Do it for me" = "Show me") {
   await page.goto("/demo");
   await page.getByRole("radio", { name: new RegExp(mode, "i") }).click();
-  await page.getByRole("button", { name: "On demand" }).click();
+  await startMileageTask(page);
   await expect(page.getByText("Planned for this session", { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("textbox", { name: "Your task" })).toHaveValue(/18-mile mileage/);
-  await page.getByRole("button", { name: "Start shared journey" }).click();
-  await expect(page.getByRole("heading", { name: "Mileage reimbursement" })).toBeVisible();
-}
-
-async function fillMileage(page: Page) {
-  for (const label of [
-    "Use Acme HQ",
-    "Use JFK Airport",
-    "Use 18 miles",
-    "Use Sep 1, 2026",
-    "Use customer workshop purpose",
-  ]) {
-    await page.getByRole("button", { name: label }).click();
-  }
-  await expect(page.getByRole("button", { name: "Prepare mileage for review" })).toBeVisible();
 }
 
 test("an on-demand mileage journey is a complete second workflow", async ({ page }) => {
@@ -53,12 +38,21 @@ test("an on-demand mileage journey is a complete second workflow", async ({ page
   await expect(page.getByRole("heading", { name: /^MILE-/ })).toBeVisible();
 });
 
+test("pressing Enter selects and starts the matching journey source", async ({ page }) => {
+  await page.goto("/demo");
+  const task = page.getByRole("textbox", { name: "Your task" });
+  await task.fill("Create a mileage reimbursement for an 18-mile customer visit");
+  await task.press("Enter");
+  await expect(page.getByRole("heading", { name: "Mileage reimbursement" })).toBeVisible();
+  await expect(page.getByText("Planned for this session", { exact: true }).first()).toBeVisible();
+});
+
 test("the on-demand mileage plan self-heals through a material V2 change", async ({ page }) => {
   await startMileage(page, "Do it for me");
   await fillMileage(page);
   await page.getByRole("button", { name: "Simulate Portal v2" }).click();
   await expect(page.getByText("PORTAL CHANGE DETECTED", { exact: true })).toBeVisible();
-  await expect(page.getByText("18 miles", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Distance")).toHaveValue("18");
   await expect(page.getByText("Safe remap · mileage.distance")).toBeVisible();
   await expect(page.getByText("New required input · vehicleType")).toBeVisible();
   await expect(page.getByText(/expense\.create|Business purpose changes/)).toHaveCount(0);
@@ -71,7 +65,7 @@ test("the on-demand mileage plan self-heals through a material V2 change", async
   await page.reload();
   await page.getByRole("button", { name: "Approve material repair" }).click();
   await expect(page.getByRole("heading", { name: "Choose vehicle type" })).toBeVisible();
-  await page.getByRole("button", { name: "Use Personal car" }).click();
-  await expect(page.getByText("Personal car", { exact: true })).toBeVisible();
+  await page.getByLabel("Vehicle type").selectOption("Personal car");
+  await expect(page.getByLabel("Vehicle type")).toHaveValue("Personal car");
   await expect(page.getByRole("button", { name: "Prepare mileage for review" })).toBeVisible();
 });

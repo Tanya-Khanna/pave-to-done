@@ -117,10 +117,10 @@ The interface shows what the agent is doing, why, what changed, and who has cont
 
 The demo opens in a resettable guest session. The person sees the expense portal as the main work surface and a compact `pave.to(done)` dock. They may:
 
-- ~~type or speak a task;~~ ✅
+- ~~type a task and press Enter, or speak it, to start immediately;~~ ✅
 - ~~choose a mode before starting;~~ ✅
-- ~~select a recorded guide; or~~ ✅
-- ~~choose **Plan from this live app** when no guide applies.~~ ✅
+- ~~let the app match a reviewed guide when one applies; or~~ ✅
+- ~~let the app plan from live capabilities when no reviewed guide applies.~~ ✅
 
 The dock explains whether the journey is recorded or on demand. It never claims an on-demand plan has been expert-approved.
 
@@ -136,7 +136,9 @@ The agent reads application state and displays one current step. The guidance sy
 - ~~a progress rail; and~~ ✅
 - ~~a control baton labeled **Your turn**.~~ ✅
 
-The person performs the action. The domain action updates state, the step's postcondition is verified, and the guide advances. The WebMCP agent cannot use domain mutation tools while SHOW ME is active.
+The first waypoint and spoken instruction appear automatically when the task starts. The person acts on the highlighted portal input, select, or button itself; there are no dock shortcuts that perform the step. After the server verifies the postcondition, the next human-owned waypoint and instruction appear automatically. **Repeat instruction** is recovery, never a prerequisite. The WebMCP agent cannot use domain mutation tools while SHOW ME is active.
+
+If the target is outside the viewport, the interface shows a directional control and scrolls only after the person activates it. Point-on-demand uses a separate amber locator and never advances the journey.
 
 ### 5.3 DO IT WITH ME
 
@@ -170,11 +172,12 @@ Mode changes take effect at the next safe boundary. The journey recomputes actor
 
 Voice is an input and feedback channel, not a separate product mode.
 
-- The person may dictate a goal, ask a question, say “pause,” or change modes.
-- Speech output reads concise instructions, warnings, and approval summaries.
+- ~~The person may dictate a goal, ask a bounded journey question, say “pause,” or change modes.~~ ✅
+- ~~Speech output automatically reads each new human-owned instruction once, plus warnings and approval summaries.~~ ✅
 - Every voice interaction has visible text, captions, mute, and keyboard controls.
 - Sensitive confirmation requires an explicit in-page control; speech alone cannot finalize it.
 - Unsupported speech recognition falls back to text without blocking the core journey.
+- ~~Mid-session help pauses authoritative work, answers from the semantic manifest, optionally points to a control, and resumes at the same verified step. Raw transcripts are not persisted.~~ ✅
 
 ## 6. Journey sources
 
@@ -291,6 +294,9 @@ An expert starts recording, completes a short mileage workflow, adds narration, 
 - ~~Recording captures a real semantic action trace and produces a reviewable guide draft.~~ ✅
 - ~~The guide system includes spotlight, target outline, coach card, progress rail, attention marker, and control baton.~~ ✅
 - ~~Speech output and captions work; text fallback is complete.~~ ✅
+- ~~Guidance begins automatically and advances automatically after each verified human action.~~ ✅
+- ~~The waypoint targets real portal controls; invalid input preserves the current step and explains the correction.~~ ✅
+- ~~Typed and spoken mid-session help support repeat, why, progress, locate, pause/resume, and agency changes.~~ ✅
 - Cosmetic and material self-healing scenarios work from all three modes.
 - ~~Sensitive submission requires in-page human confirmation.~~ ✅
 - ~~All UI actions and WebMCP tools call the same domain action layer.~~ ✅
@@ -438,9 +444,9 @@ The landing page must communicate the product in the first viewport and provide 
 
 - ~~**Top bar:** brand, WebMCP status, portal version/demo update control, reset.~~ ✅
 - ~~**Main work surface:** Acme Expense Portal, fully interactive without the agent.~~ ✅
-- **Guide dock:** goal, source, mode selector, current step, explanation, progress, actor, pause.
+- ~~**Guide dock:** goal, automatically selected source, mode selector, current step, explanation, progress, actor, pause, repeat, and bounded help.~~ ✅
 - ~~**Action trail:** real state changes and repairs, with actor and time.~~ ✅
-- **Voice control:** compact microphone/waveform with visible transcript and mute.
+- ~~**Voice control:** compact microphone/waveform with visible answer, text fallback, captions, and mute.~~ ✅
 - **Recorder drawer:** deliberate record control, captured semantic events, narration, review/publish.
 - **Repair review:** diff card anchored to the affected journey step.
 

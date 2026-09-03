@@ -15,7 +15,7 @@ An adaptive journey layer for web apps where a person can **learn the task**, **
 ![A real WebMCP session in the deployed pave.to(done) app: diagnostics advance from inspection through journey creation, draft updates, and a human-only confirmation boundary](./docs/assets/webmcp-invocation.gif)
 
 > [!IMPORTANT]
-> **Build status — September 2, 2026:** the complete vertical slice is live: all three agency modes, real imperative WebMCP tools, recorded and on-demand journeys, semantic guidance, reviewed self-healing, server-authoritative approvals, voice input/output, event replay, and the responsive product UI. Every frame above comes from one real session in ChatGPT's in-app browser. The page's native WebMCP tools performed `get_app_context`, `create_journey`, `create_expense_draft`, two `update_expense_draft` calls, and `prepare_expense_submission`; the visible diagnostics and portal state changed after each call. The exact capture provenance and reproduction command are [documented](./docs/media-proof.md).
+> **Build status — September 3, 2026:** the complete vertical slice includes all three agency modes, real imperative WebMCP tools, automatically matched recorded/on-demand journeys, continuous semantic guidance on real portal controls, automatic spoken steps, bounded mid-session help, point-on-demand, reviewed self-healing, server-authoritative approvals, event replay, and the responsive product UI. The existing proof frames come from one real session in ChatGPT's in-app browser; refreshed media will be captured from the matching deployment before submission. The exact capture provenance and reproduction command are [documented](./docs/media-proof.md).
 
 ## The 20-second version
 
@@ -25,15 +25,15 @@ For the hackathon demo, a user asks the fictional **Acme Expense Portal**:
 
 > “Submit my $86 client dinner from yesterday under Project Atlas.”
 
-The task can start from an expert-recorded guide or be composed from the site's current capabilities. The user chooses an agency mode, watches every action update the same visible task, and retains control over sensitive consequences. When Portal v2 moves navigation and adds a required field, the journey preserves completed work, remaps the safe change, and asks the user to approve the material repair.
+Type a task and press Enter—or speak it once. `pave.to(done)` matches an expert-recorded guide when one applies and otherwise composes a journey from the site's live capabilities. In Show Me, the first coral waypoint and instruction appear automatically on the real portal control; after the person acts and the server verifies the result, the next waypoint and spoken instruction appear automatically. Mid-session help can explain why, report progress, or point to another control in amber without losing the current step. The user may change agency mode at any time and retains control over sensitive consequences. When Portal v2 moves navigation and adds a required field, the journey preserves completed work, remaps the safe change, and asks the user to approve the material repair.
 
 ## One task, three levels of agency
 
-| Mode              | Agent                                                             | Person                                     | What the interface proves                                 |
-| ----------------- | ----------------------------------------------------------------- | ------------------------------------------ | --------------------------------------------------------- |
-| **SHOW ME**       | Explains the next step and highlights its current semantic target | Performs every action                      | Spotlight, coach card, progress, and state verification   |
-| **DO IT WITH ME** | Completes permitted steps, then passes a visible control baton    | Handles judgment and sensitive choices     | Alternating ownership without restarting the journey      |
-| **DO IT FOR ME**  | Executes reversible work and verifies the result                  | Reviews and confirms consequential actions | Action trail, pending approval, and human-only completion |
+| Mode              | Agent                                                          | Person                                     | What the interface proves                                    |
+| ----------------- | -------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------ |
+| **SHOW ME**       | Automatically explains and highlights each semantic target     | Uses the actual portal controls            | Continuous waypoint, voice, help, progress, and verification |
+| **DO IT WITH ME** | Completes permitted steps, then passes a visible control baton | Handles judgment and sensitive choices     | Alternating ownership without restarting the journey         |
+| **DO IT FOR ME**  | Executes reversible work and verifies the result               | Reviews and confirms consequential actions | Action trail, pending approval, and human-only completion    |
 
 The mode may change mid-task. Completed work remains complete. More autonomy never erases an existing approval boundary.
 

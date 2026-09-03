@@ -1680,6 +1680,38 @@ summary:focus-visible {
   font-size: 11px;
   font-weight: 650;
 }
+.portal-input .field-value {
+  align-items: center;
+  gap: 8px;
+}
+.portal-input input,
+.portal-input select {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  padding: 0;
+  color: #202522;
+  background: transparent;
+  font: inherit;
+}
+.portal-input input::placeholder {
+  color: #a3aaa6;
+}
+.portal-input input:disabled,
+.portal-input select:disabled {
+  color: #5f6863;
+  opacity: 1;
+  cursor: default;
+  -webkit-text-fill-color: #5f6863;
+}
+.portal-input.field-active {
+  border-color: var(--coral);
+  box-shadow: 0 0 0 3px rgba(255, 112, 95, 0.09);
+}
+.expense-field > small.field-error {
+  color: #b94134;
+}
 .field-value svg {
   color: #3c9b72;
 }
@@ -1705,6 +1737,22 @@ summary:focus-visible {
   justify-content: space-between;
   padding: 9px 11px;
   color: #3b6956;
+}
+.form-review-action {
+  width: 100%;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.form-review-action.active {
+  border-color: var(--coral);
+  color: #8a3c32;
+  background: #fff4f1;
+  box-shadow: 0 0 0 3px rgba(255, 112, 95, 0.08);
+}
+.form-review-action:disabled {
+  cursor: default;
+  opacity: 1;
 }
 .form-review > div {
   display: flex;
@@ -1971,6 +2019,24 @@ summary:focus-visible {
 }
 .journey-start textarea:focus {
   border-color: var(--coral);
+}
+.task-examples {
+  display: flex;
+  gap: 6px;
+  margin-top: 7px;
+}
+.task-examples button {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  padding: 5px 8px;
+  font-size: 7px;
+  cursor: pointer;
+}
+.task-examples button:hover {
+  border-color: var(--coral);
+  color: var(--bone);
 }
 .guide-match {
   display: flex;
@@ -2578,6 +2644,57 @@ summary:focus-visible {
   background: var(--coral);
   box-shadow: 0 0 16px var(--coral);
 }
+.guidance-reveal {
+  position: fixed;
+  z-index: 84;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  border: 1px solid var(--coral);
+  border-radius: 999px;
+  background: #101413;
+  color: var(--bone);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  padding: 10px 15px;
+  font-size: 9px;
+  font-weight: 750;
+  cursor: pointer;
+}
+.locator-pulse {
+  position: fixed;
+  z-index: 85;
+  pointer-events: none;
+  border: 2px solid var(--amber);
+  border-radius: 12px;
+  box-shadow:
+    0 0 0 5px rgba(246, 206, 117, 0.15),
+    0 0 28px rgba(246, 206, 117, 0.65);
+  animation: locator-ring 1.15s ease-in-out infinite;
+}
+.locator-pulse span {
+  position: absolute;
+  right: -2px;
+  bottom: calc(100% + 7px);
+  max-width: 190px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: var(--amber);
+  color: #19160d;
+  padding: 5px 8px;
+  font:
+    800 7px ui-monospace,
+    monospace;
+  text-transform: uppercase;
+}
+@keyframes locator-ring {
+  50% {
+    box-shadow:
+      0 0 0 10px rgba(246, 206, 117, 0.04),
+      0 0 38px rgba(246, 206, 117, 0.75);
+  }
+}
 .guidance-coach {
   position: fixed;
   z-index: 82;
@@ -3145,6 +3262,68 @@ summary:focus-visible {
 .voice-task:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+.guidance-help {
+  border-top: 1px solid var(--line);
+  padding: 11px 14px;
+}
+.guidance-help-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--muted);
+  font-size: 8px;
+  font-weight: 750;
+}
+.guidance-help-heading span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.guidance-help kbd {
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  color: var(--bone);
+  padding: 2px 5px;
+  font:
+    700 7px ui-monospace,
+    monospace;
+}
+.guidance-help form {
+  display: grid;
+  grid-template-columns: 1fr 30px 30px;
+  gap: 5px;
+  margin-top: 8px;
+}
+.guidance-help input,
+.guidance-help form button {
+  min-height: 31px;
+  border: 1px solid var(--line);
+  border-radius: 7px;
+  background: #0c0f0f;
+  color: var(--bone);
+}
+.guidance-help input {
+  min-width: 0;
+  padding: 0 8px;
+  font-size: 8px;
+  outline: 0;
+}
+.guidance-help input:focus {
+  border-color: var(--coral);
+}
+.guidance-help form button {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+.guidance-help > p {
+  margin: 8px 0 0;
+  border-left: 2px solid var(--amber);
+  color: #c7ccc9;
+  padding-left: 8px;
+  font-size: 8px;
+  line-height: 1.45;
 }
 @keyframes voice-ring {
   to {

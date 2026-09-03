@@ -16,7 +16,7 @@ Most web help lives outside the work. Documentation becomes stale, fixed product
 
 The same task supports three enforced agency modes:
 
-- **SHOW ME:** the agent explains and highlights the current semantic control; the person acts.
+- **SHOW ME:** the task begins with one typed or spoken request; the app automatically highlights and narrates each real semantic control, verifies the person's action, and advances to the next waypoint.
 - **DO IT WITH ME:** the person and agent alternate as judgment and risk change.
 - **DO IT FOR ME:** the agent executes reversible work and stops at visible human-only consequences.
 
@@ -54,7 +54,7 @@ The verified build passes 91 unit, integration, property, contract, and prompt-e
 
 ## Better user experience
 
-Users do not have to choose permanently between a tutorial and automation. They can move along an agency spectrum during one task and always see who has control, what changed, what was verified, and what still needs them. Voice input and spoken guidance have complete text fallbacks. Keyboard focus, live status announcements, reduced motion, responsive layouts, reset, loading, repair, approval, and completion states are built into the demo.
+Users do not have to choose permanently between a tutorial and automation. They can move along an agency spectrum during one task and always see who has control, what changed, what was verified, and what still needs them. In Show Me, no repeated “highlight” action is required: guidance and speech advance automatically across the actual portal controls. Typed or spoken mid-session help can repeat, explain, report progress, pause, change modes, or point to a control without advancing the task. Voice features have complete text fallbacks. Keyboard focus, live status announcements, reduced motion, responsive layouts, reset, loading, repair, approval, and completion states are built into the demo.
 
 ## Audience and potential impact
 
@@ -71,7 +71,7 @@ WebMCP, React, TypeScript, Vite, Cloudflare Workers, Cloudflare Durable Objects,
 ## Judge walkthrough
 
 1. Open the live `/demo` page in ChatGPT's in-app browser.
-2. Start the recorded guide in **SHOW ME** and ask the agent to inspect the current state and highlight the next step.
+2. Leave **SHOW ME** selected, type the expense task, and press Enter. The first coral waypoint and spoken instruction appear automatically; use the highlighted portal controls and watch each verified action advance guidance without another request.
 3. Switch the same journey to **DO IT WITH ME** and let the agent fill reversible fields.
 4. Switch to **DO IT FOR ME** and ask it to prepare submission. Verify that no final-submit tool exists.
 5. Use the visible human confirmation control.

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   Activity,
   AudioLines,
@@ -36,7 +36,6 @@ import {
   DEFAULT_MILEAGE_GOAL,
   DEFAULT_RECORDED_GUIDE,
   DEMO_AGENCY_POLICIES,
-  DEMO_BUSINESS_PURPOSE,
   DEMO_CATEGORIES,
   DEMO_MILEAGE,
   DEMO_PROJECTS,
@@ -44,7 +43,8 @@ import {
 } from "../domain/fixtures";
 import type { Actor, AgencyMode, DomainEvent, JourneySnapshot } from "../domain/types";
 import { AnchorRegistryProvider, useAnchorRef } from "../guidance/AnchorRegistry";
-import { GuidanceOverlay } from "../guidance/GuidanceOverlay";
+import { GuidanceOverlay, LocatorOverlay } from "../guidance/GuidanceOverlay";
+import { resolveGuidanceHelp } from "../guidance/help";
 import { buildSpokenStatus, speechActionLabel } from "../shared/speechOutput";
 import { useWebMCPTools } from "../webmcp/useWebMCPTools";
 
@@ -62,6 +62,19 @@ function speechOutputAvailable() {
   );
 }
 
+function journeySourceForGoal(goal: string) {
+  const normalized = goal.toLowerCase();
+  const recordedTerms = ["expense", "receipt", "dinner", "client meal", "project atlas"];
+  const recorded = recordedTerms.some((term) => normalized.includes(term));
+  return recorded
+    ? ({
+        kind: "recorded" as const,
+        guideId: DEFAULT_RECORDED_GUIDE.id,
+        guideVersion: DEFAULT_RECORDED_GUIDE.version,
+      } as const)
+    : ({ kind: "on-demand" as const, goal } as const);
+}
+
 export function DemoPage() {
   return (
     <AnchorRegistryProvider>
@@ -72,13 +85,23 @@ export function DemoPage() {
 
 function DemoExperience() {
   const session = useJourneySession();
-  const [source, setSource] = useState<"recorded" | "on-demand">("recorded");
-  const [mode, setMode] = useState<AgencyMode>("with");
+  const [mode, setMode] = useState<AgencyMode>("show");
   const [goal, setGoal] = useState(DEFAULT_JOURNEY_GOAL);
   const [showDiagnostics, setShowDiagnostics] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [speaking, setSpeaking] = useState(false);
   const [speechMuted, setSpeechMuted] = useState(false);
+  const [helpListening, setHelpListening] = useState(false);
+  const [helpAnswer, setHelpAnswer] = useState<string | null>(null);
+  const [guidanceWake, setGuidanceWake] = useState(0);
+  const [locator, setLocator] = useState<{
+    anchorKey: string;
+    label: string;
+  } | null>(null);
+  const autoGuidanceInFlight = useRef<string | null>(null);
+  const autoSpokenStep = useRef<string | null>(null);
+  const helpPausePromise = useRef<Promise<unknown> | null>(null);
+  const helpProducedResult = useRef(false);
   const webmcp = useWebMCPTools({
     snapshot: session.snapshot,
     snapshotRef: session.snapshotRef,
@@ -98,6 +121,226 @@ function DemoExperience() {
     },
     [],
   );
+
+  useEffect(() => {
+    const wake = () => setGuidanceWake((value) => value + 1);
+    window.addEventListener("focus", wake);
+    document.addEventListener("visibilitychange", wake);
+    return () => {
+      window.removeEventListener("focus", wake);
+      document.removeEventListener("visibilitychange", wake);
+    };
+  }, []);
+
+  const run = useCallback(
+    async (name: string, command: Parameters<typeof session.command>[1]) => {
+      try {
+        const result = await session.command(name, command, human);
+        setNotice(result.ok ? "State verified." : result.error.message);
+        return result;
+      } catch (cause) {
+        setNotice(cause instanceof Error ? cause.message : "Action failed.");
+      }
+    },
+    [session.command],
+  );
+
+  const speakText = useCallback(
+    (text: string, onFinished?: () => void) => {
+      if (speechMuted || !speechOutputAvailable()) {
+        onFinished?.();
+        return false;
+      }
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 0.94;
+      utterance.onstart = () => setSpeaking(true);
+      utterance.onend = () => {
+        setSpeaking(false);
+        onFinished?.();
+      };
+      utterance.onerror = () => {
+        setSpeaking(false);
+        onFinished?.();
+      };
+      window.speechSynthesis.speak(utterance);
+      return true;
+    },
+    [speechMuted],
+  );
+
+  const start = useCallback(
+    (requestedGoal = goal) => {
+      const trimmed = requestedGoal.trim();
+      if (!trimmed) {
+        setNotice("Describe the task before starting the journey.");
+        return Promise.resolve(undefined);
+      }
+      setGoal(trimmed);
+      return run("start_journey_ui", {
+        type: "StartJourney",
+        source: journeySourceForGoal(trimmed),
+        mode,
+      });
+    },
+    [goal, mode, run],
+  );
+
+  const setAgency = useCallback(
+    (next: AgencyMode) => {
+      setMode(next);
+      if (session.snapshotRef.current?.source)
+        void run("change_agency_mode_ui", { type: "ChangeAgencyMode", mode: next });
+    },
+    [run, session.snapshotRef],
+  );
+
+  useEffect(() => {
+    const snapshot = session.snapshot;
+    const current = snapshot?.steps.find((step) => step.status === "current");
+    if (
+      !snapshot?.source ||
+      !current ||
+      current.assignedActor !== "human" ||
+      !["active", "awaiting_user"].includes(snapshot.status) ||
+      snapshot.lastGuidance?.stepId === current.id ||
+      document.visibilityState !== "visible" ||
+      !document.hasFocus()
+    )
+      return;
+    const key = `${snapshot.sessionId}:${snapshot.revision}:${current.id}`;
+    if (autoGuidanceInFlight.current === key) return;
+    autoGuidanceInFlight.current = key;
+    void session
+      .command("automatic_guidance_ui", { type: "ShowGuidance" }, human)
+      .catch((cause) =>
+        setNotice(cause instanceof Error ? cause.message : "Automatic guidance could not start."),
+      )
+      .finally(() => {
+        if (autoGuidanceInFlight.current === key) autoGuidanceInFlight.current = null;
+      });
+  }, [guidanceWake, session.command, session.snapshot]);
+
+  useEffect(() => {
+    const snapshot = session.snapshot;
+    const current = snapshot?.steps.find((step) => step.status === "current");
+    if (
+      !snapshot ||
+      !current ||
+      current.assignedActor !== "human" ||
+      snapshot.status !== "awaiting_user" ||
+      snapshot.lastGuidance?.stepId !== current.id ||
+      document.visibilityState !== "visible" ||
+      !document.hasFocus()
+    )
+      return;
+    const key = `${snapshot.sessionId}:${current.id}:${snapshot.lastGuidance.anchorKey ?? ""}`;
+    if (autoSpokenStep.current === key) return;
+    autoSpokenStep.current = key;
+    speakText(buildSpokenStatus(snapshot));
+  }, [guidanceWake, session.snapshot, speakText]);
+
+  const answerGuidanceQuestion = useCallback(
+    async (question: string, alreadyPausedForHelp = false) => {
+      let snapshot = session.snapshotRef.current;
+      if (!snapshot?.source) return;
+      let resumeAfterAnswer = alreadyPausedForHelp;
+      if (!alreadyPausedForHelp && ["active", "awaiting_user"].includes(snapshot.status)) {
+        const paused = await run("voice_help_pause_ui", {
+          type: "SetJourneyPaused",
+          paused: true,
+        });
+        resumeAfterAnswer = Boolean(paused?.ok);
+        snapshot = session.snapshotRef.current;
+      }
+      if (!snapshot) return;
+      const help = resolveGuidanceHelp(question, snapshot);
+      setHelpAnswer(help.answer);
+      if (help.anchorKey)
+        setLocator({ anchorKey: help.anchorKey, label: help.capabilityId ?? "Requested control" });
+
+      if (help.intent === "pause") {
+        if (snapshot.status !== "paused")
+          await run("voice_pause_ui", { type: "SetJourneyPaused", paused: true });
+        speakText(help.answer);
+        return;
+      }
+      if (help.intent === "resume") {
+        if (session.snapshotRef.current?.status === "paused")
+          await run("voice_resume_ui", { type: "SetJourneyPaused", paused: false });
+        speakText(help.answer);
+        return;
+      }
+      if (help.intent === "change_mode" && help.mode)
+        await run("voice_change_agency_mode_ui", { type: "ChangeAgencyMode", mode: help.mode });
+
+      const resume = () => {
+        if (resumeAfterAnswer && session.snapshotRef.current?.status === "paused")
+          void run("voice_help_resume_ui", { type: "SetJourneyPaused", paused: false });
+      };
+      speakText(help.answer, resume);
+    },
+    [run, session.snapshotRef, speakText],
+  );
+
+  const beginHelpListening = useCallback(() => {
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition || !session.snapshotRef.current?.source) {
+      setHelpAnswer("Voice recognition is unavailable. Type a journey question instead.");
+      return;
+    }
+    const recognition = new Recognition();
+    recognition.lang = "en-US";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    helpProducedResult.current = false;
+    recognition.onstart = () => {
+      setHelpListening(true);
+      const status = session.snapshotRef.current?.status;
+      helpPausePromise.current = ["active", "awaiting_user"].includes(status ?? "")
+        ? run("voice_help_pause_ui", { type: "SetJourneyPaused", paused: true })
+        : Promise.resolve(undefined);
+    };
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript?.trim();
+      if (!transcript) return;
+      helpProducedResult.current = true;
+      void Promise.resolve(helpPausePromise.current).then(() =>
+        answerGuidanceQuestion(transcript, true),
+      );
+    };
+    recognition.onerror = () => {
+      setHelpListening(false);
+      setHelpAnswer("I could not hear that. Type the question or try the microphone again.");
+    };
+    recognition.onend = () => {
+      setHelpListening(false);
+      if (!helpProducedResult.current)
+        void Promise.resolve(helpPausePromise.current).then(() => {
+          if (session.snapshotRef.current?.status === "paused")
+            void run("voice_help_resume_ui", { type: "SetJourneyPaused", paused: false });
+        });
+    };
+    recognition.start();
+  }, [answerGuidanceQuestion, run, session.snapshotRef]);
+
+  const dismissLocator = useCallback(() => setLocator(null), []);
+
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      const target = event.target as HTMLElement | null;
+      if (
+        event.key !== "?" ||
+        target?.matches("input, textarea, select, [contenteditable='true']") ||
+        !session.snapshotRef.current?.source
+      )
+        return;
+      event.preventDefault();
+      beginHelpListening();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [beginHelpListening, session.snapshotRef]);
 
   if (session.loading)
     return (
@@ -125,39 +368,9 @@ function DemoExperience() {
     ? Math.round((completed / snapshot.steps.length) * 100)
     : 0;
 
-  const run = async (name: string, command: Parameters<typeof session.command>[1]) => {
-    try {
-      const result = await session.command(name, command, human);
-      setNotice(result.ok ? "State verified." : result.error.message);
-      return result;
-    } catch (cause) {
-      setNotice(cause instanceof Error ? cause.message : "Action failed.");
-    }
-  };
-
-  const start = () =>
-    run("start_journey_ui", {
-      type: "StartJourney",
-      source:
-        source === "recorded"
-          ? {
-              kind: "recorded",
-              guideId: DEFAULT_RECORDED_GUIDE.id,
-              guideVersion: DEFAULT_RECORDED_GUIDE.version,
-            }
-          : { kind: "on-demand", goal },
-      mode,
-    });
-
   const resetAndReload = async () => {
     const result = await run("reset_session_ui", { type: "ResetSession" });
     if (result?.ok) window.location.reload();
-  };
-
-  const setAgency = (next: AgencyMode) => {
-    setMode(next);
-    if (snapshot.source)
-      void run("change_agency_mode_ui", { type: "ChangeAgencyMode", mode: next });
   };
 
   const spokenText = buildSpokenStatus(snapshot);
@@ -173,13 +386,7 @@ function DemoExperience() {
       setNotice("Speech output is unavailable in this browser.");
       return;
     }
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance(spokenText);
-    utterance.rate = 0.94;
-    utterance.onstart = () => setSpeaking(true);
-    utterance.onend = () => setSpeaking(false);
-    utterance.onerror = () => setSpeaking(false);
-    window.speechSynthesis.speak(utterance);
+    speakText(spokenText);
   };
 
   const toggleSpeechMuted = () => {
@@ -355,7 +562,11 @@ function DemoExperience() {
             </div>
           )}
 
-          {isMileage ? <MileageForm snapshot={snapshot} /> : <ExpenseForm snapshot={snapshot} />}
+          {isMileage ? (
+            <MileageForm snapshot={snapshot} run={run} />
+          ) : (
+            <ExpenseForm snapshot={snapshot} run={run} />
+          )}
         </section>
 
         <aside className="journey-dock">
@@ -392,6 +603,17 @@ function DemoExperience() {
               >
                 {speaking ? <Pause size={15} /> : <AudioLines size={15} />}
               </button>
+              {snapshot.source && (
+                <button
+                  className={`icon-button ${helpListening ? "active" : ""}`}
+                  onClick={beginHelpListening}
+                  aria-label="Ask while guiding"
+                  aria-pressed={helpListening}
+                  title="Ask while guiding (?)"
+                >
+                  <Mic size={15} />
+                </button>
+              )}
               <button
                 className={`icon-button ${speechMuted ? "active" : ""}`}
                 onClick={toggleSpeechMuted}
@@ -432,19 +654,22 @@ function DemoExperience() {
           />
 
           {!snapshot.source ? (
-            <JourneyStart
-              source={source}
-              setSource={setSource}
-              goal={goal}
-              setGoal={setGoal}
-              onStart={start}
-            />
+            <JourneyStart goal={goal} setGoal={setGoal} onStart={start} />
           ) : (
             <JourneyControl
               snapshot={snapshot}
               progress={progress}
               events={session.events}
               run={run}
+            />
+          )}
+
+          {snapshot.source && (
+            <GuidanceHelp
+              listening={helpListening}
+              answer={helpAnswer}
+              onListen={beginHelpListening}
+              onAsk={(question) => void answerGuidanceQuestion(question)}
             />
           )}
 
@@ -458,6 +683,12 @@ function DemoExperience() {
         title={current?.title}
         reason={snapshot.lastGuidance?.message ?? current?.description}
         actor={current?.assignedActor}
+      />
+      <LocatorOverlay
+        anchorKey={locator?.anchorKey}
+        active={Boolean(locator)}
+        label={locator?.label}
+        onDismiss={dismissLocator}
       />
       {notice && (
         <div className="toast" role="status">
@@ -524,54 +755,50 @@ function AgencySelector({
 }
 
 function JourneyStart({
-  source,
-  setSource,
   goal,
   setGoal,
   onStart,
 }: {
-  source: "recorded" | "on-demand";
-  setSource(value: "recorded" | "on-demand"): void;
   goal: string;
   setGoal(value: string): void;
-  onStart(): void;
+  onStart(goal?: string): void;
 }) {
+  const source = journeySourceForGoal(goal);
   return (
     <div className="journey-start">
-      <div className="source-toggle">
-        <button
-          className={source === "recorded" ? "active" : ""}
-          onClick={() => {
-            setSource("recorded");
-            setGoal(DEFAULT_JOURNEY_GOAL);
-          }}
-        >
-          <History size={14} /> Recorded guide
-        </button>
-        <button
-          className={source === "on-demand" ? "active" : ""}
-          onClick={() => {
-            setSource("on-demand");
-            setGoal(DEFAULT_MILEAGE_GOAL);
-          }}
-        >
-          <WandSparkles size={14} /> On demand
-        </button>
-      </div>
       <label htmlFor="journey-task">
         <span className="task-label">
           <span>Your task</span>
-          <VoiceTaskButton onTranscript={setGoal} />
+          <VoiceTaskButton
+            onTranscript={(transcript) => {
+              setGoal(transcript);
+              onStart(transcript);
+            }}
+          />
         </span>
         <textarea
           id="journey-task"
           aria-label="Your task"
           value={goal}
           onChange={(event) => setGoal(event.target.value)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              onStart(goal);
+            }
+          }}
           maxLength={240}
         />
       </label>
-      {source === "recorded" ? (
+      <div className="task-examples" aria-label="Example tasks">
+        <button type="button" onClick={() => setGoal(DEFAULT_JOURNEY_GOAL)}>
+          Expense receipt
+        </button>
+        <button type="button" onClick={() => setGoal(DEFAULT_MILEAGE_GOAL)}>
+          Mileage reimbursement
+        </button>
+      </div>
+      {source.kind === "recorded" ? (
         <div className="guide-match">
           <span>
             <Check size={13} />
@@ -591,8 +818,8 @@ function JourneyStart({
           </span>
         </div>
       )}
-      <button className="button primary dock-start" onClick={onStart}>
-        <Play size={15} /> Start shared journey
+      <button className="button primary dock-start" onClick={() => onStart(goal)}>
+        <Play size={15} /> Start guiding me
       </button>
     </div>
   );
@@ -632,6 +859,58 @@ function VoiceTaskButton({ onTranscript }: { onTranscript(value: string): void }
       </span>
       {listening ? "Listening…" : "Voice"}
     </button>
+  );
+}
+
+function GuidanceHelp({
+  listening,
+  answer,
+  onListen,
+  onAsk,
+}: {
+  listening: boolean;
+  answer: string | null;
+  onListen(): void;
+  onAsk(question: string): void;
+}) {
+  const [question, setQuestion] = useState("");
+  return (
+    <div className="guidance-help">
+      <div className="guidance-help-heading">
+        <span>
+          <Mic size={13} /> Ask while guiding
+        </span>
+        <kbd>?</kbd>
+      </div>
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          const value = question.trim();
+          if (!value) return;
+          onAsk(value);
+          setQuestion("");
+        }}
+      >
+        <input
+          aria-label="Journey question"
+          value={question}
+          onChange={(event) => setQuestion(event.target.value)}
+          placeholder="Try “why?” or “where is amount?”"
+          maxLength={240}
+        />
+        <button type="button" onClick={onListen} aria-label="Ask journey question by voice">
+          {listening ? <AudioLines size={14} /> : <Mic size={14} />}
+        </button>
+        <button type="submit" aria-label="Ask journey question">
+          <ArrowRight size={14} />
+        </button>
+      </form>
+      {answer && (
+        <p role="status" aria-live="polite">
+          {answer}
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -755,9 +1034,8 @@ function JourneyControl({
           className="button ghost full"
           onClick={() => void run("show_guidance_ui", { type: "ShowGuidance" })}
         >
-          <MousePointer2 size={15} /> Highlight this step
+          <AudioLines size={15} /> Repeat instruction
         </button>
-        <HumanStepAction snapshot={snapshot} run={run} />
       </div>
       {current.assignedActor === "agent" && (
         <div className="agent-ready">
@@ -802,98 +1080,6 @@ function ActionTrail({ events }: { events: DomainEvent[] }) {
           ))}
       </div>
     </details>
-  );
-}
-
-function HumanStepAction({
-  snapshot,
-  run,
-}: {
-  snapshot: JourneySnapshot;
-  run: (name: string, command: any) => Promise<any>;
-}) {
-  const step = snapshot.steps.find((item) => item.status === "current");
-  if (!step) return null;
-  const actions: Record<string, { label: string; command: any }> = {
-    "expense.date": {
-      label: `Use ${DEMO_RECEIPT.displayDate}`,
-      command: { type: "UpdateExpenseDraft", field: "date", value: DEMO_RECEIPT.date },
-    },
-    "expense.amount": {
-      label: `Use $${DEMO_RECEIPT.amount.toFixed(2)}`,
-      command: { type: "UpdateExpenseDraft", field: "amount", value: DEMO_RECEIPT.amount },
-    },
-    "expense.project": {
-      label: `Choose ${DEMO_PROJECTS[0]}`,
-      command: { type: "UpdateExpenseDraft", field: "project", value: DEMO_PROJECTS[0] },
-    },
-    "expense.category": {
-      label: `Choose ${DEMO_CATEGORIES[0]}`,
-      command: { type: "UpdateExpenseDraft", field: "category", value: DEMO_CATEGORIES[0] },
-    },
-    "expense.businessPurpose": {
-      label: "Use client workshop purpose",
-      command: {
-        type: "UpdateExpenseDraft",
-        field: "businessPurpose",
-        value: DEMO_BUSINESS_PURPOSE,
-      },
-    },
-    "expense.prepare": {
-      label: "Prepare for my review",
-      command: { type: "PrepareExpenseSubmission" },
-    },
-    "mileage.origin": {
-      label: `Use ${DEMO_MILEAGE.origin}`,
-      command: { type: "UpdateMileageDraft", field: "origin", value: DEMO_MILEAGE.origin },
-    },
-    "mileage.destination": {
-      label: `Use ${DEMO_MILEAGE.destination}`,
-      command: {
-        type: "UpdateMileageDraft",
-        field: "destination",
-        value: DEMO_MILEAGE.destination,
-      },
-    },
-    "mileage.distance": {
-      label: `Use ${DEMO_MILEAGE.distanceMiles} miles`,
-      command: {
-        type: "UpdateMileageDraft",
-        field: "distanceMiles",
-        value: DEMO_MILEAGE.distanceMiles,
-      },
-    },
-    "mileage.date": {
-      label: `Use ${DEMO_MILEAGE.displayDate}`,
-      command: { type: "UpdateMileageDraft", field: "tripDate", value: DEMO_MILEAGE.tripDate },
-    },
-    "mileage.purpose": {
-      label: "Use customer workshop purpose",
-      command: { type: "UpdateMileageDraft", field: "purpose", value: DEMO_MILEAGE.purpose },
-    },
-    "mileage.vehicleType": {
-      label: `Use ${DEMO_MILEAGE.vehicleType}`,
-      command: {
-        type: "UpdateMileageDraft",
-        field: "vehicleType",
-        value: DEMO_MILEAGE.vehicleType,
-      },
-    },
-    "mileage.prepare": {
-      label: "Prepare mileage for review",
-      command: { type: "PrepareMileageSubmission" },
-    },
-  };
-  const action = actions[step.capabilityId];
-  if (!action) return null;
-  return (
-    <button
-      className="button primary full"
-      onClick={() => void run(`human_${step.capabilityId}`, action.command)}
-    >
-      {action.label}
-      <ArrowRight size={15} />
-    </button>
   );
 }
 
@@ -1224,34 +1410,189 @@ function RecordingControl({
   );
 }
 
-function FieldShell({
+function TextPortalField({
   anchor,
   label,
   value,
   hint,
   active,
+  type = "text",
+  placeholder,
+  parse = (next) => next.trim(),
+  onCommit,
 }: {
   anchor: string;
   label: string;
   value: string;
   hint: string;
   active: boolean;
+  type?: "text" | "number";
+  placeholder?: string;
+  parse?: (value: string) => string | number | null;
+  onCommit(value: string | number): Promise<any>;
 }) {
-  const ref = useAnchorRef<HTMLDivElement>(anchor);
+  const ref = useAnchorRef<HTMLInputElement>(anchor);
+  const [draft, setDraft] = useState(value);
+  const [error, setError] = useState<string | null>(null);
+  const lastSubmitted = useRef<string | null>(null);
+  const committing = useRef(false);
+  useEffect(() => setDraft(value), [value]);
+
+  const commit = async () => {
+    if (!active || draft === value || committing.current) return;
+    const parsed = parse(draft);
+    if (parsed === null || parsed === "") {
+      setError("Enter a valid value before continuing.");
+      return;
+    }
+    const submitted = String(parsed);
+    if (lastSubmitted.current === submitted) return;
+    lastSubmitted.current = submitted;
+    committing.current = true;
+    const result = await onCommit(parsed);
+    committing.current = false;
+    if (result?.ok) setError(null);
+    else {
+      lastSubmitted.current = null;
+      if (result?.error?.message) setError(result.error.message);
+    }
+  };
+
   return (
-    <div ref={ref} className={`expense-field ${active ? "field-active" : ""}`}>
-      <label>{label}</label>
+    <div className={`expense-field portal-input ${active ? "field-active" : ""}`}>
+      <label htmlFor={`field-${anchor}`}>{label}</label>
       <div className="field-value">
-        <span>{value || "Not set"}</span>
-        {value && <Check size={13} />}
+        <input
+          ref={ref}
+          id={`field-${anchor}`}
+          type={type}
+          value={draft}
+          placeholder={placeholder ?? "Not set"}
+          disabled={!active}
+          aria-invalid={Boolean(error)}
+          aria-describedby={`hint-${anchor}`}
+          inputMode={type === "number" ? "decimal" : undefined}
+          min={type === "number" ? "0.1" : undefined}
+          step={type === "number" ? "0.01" : undefined}
+          onChange={(event) => setDraft(event.target.value)}
+          onBlur={() => void commit()}
+          onKeyDown={(event) => {
+            if (event.key === "Enter") {
+              event.preventDefault();
+              void commit();
+            }
+          }}
+        />
+        {value && <Check size={13} aria-hidden="true" />}
+      </div>
+      <small id={`hint-${anchor}`} className={error ? "field-error" : ""}>
+        {error ?? hint}
+      </small>
+    </div>
+  );
+}
+
+function SelectPortalField({
+  anchor,
+  label,
+  value,
+  hint,
+  active,
+  options,
+  onCommit,
+}: {
+  anchor: string;
+  label: string;
+  value: string;
+  hint: string;
+  active: boolean;
+  options: string[];
+  onCommit(value: string): Promise<any>;
+}) {
+  const ref = useAnchorRef<HTMLSelectElement>(anchor);
+  return (
+    <div className={`expense-field portal-input ${active ? "field-active" : ""}`}>
+      <label htmlFor={`field-${anchor}`}>{label}</label>
+      <div className="field-value">
+        <select
+          ref={ref}
+          id={`field-${anchor}`}
+          value={value}
+          disabled={!active}
+          onChange={(event) => void onCommit(event.target.value)}
+          onKeyDown={(event) => {
+            if (!active || !["ArrowDown", "ArrowUp"].includes(event.key)) return;
+            event.preventDefault();
+            const selected = Math.max(0, options.indexOf(value));
+            const next = value
+              ? event.key === "ArrowDown"
+                ? Math.min(options.length - 1, selected + 1)
+                : Math.max(0, selected - 1)
+              : 0;
+            void onCommit(options[next]);
+          }}
+        >
+          <option value="" disabled>
+            Select…
+          </option>
+          {options.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        {value && <Check size={13} aria-hidden="true" />}
       </div>
       <small>{hint}</small>
     </div>
   );
 }
 
-function ExpenseForm({ snapshot }: { snapshot: JourneySnapshot }) {
-  const current = snapshot.steps.find((step) => step.status === "current")?.capabilityId;
+function PrepareControl({
+  anchor,
+  active,
+  title,
+  description,
+  onPrepare,
+}: {
+  anchor: string;
+  active: boolean;
+  title: string;
+  description: string;
+  onPrepare(): Promise<any>;
+}) {
+  const ref = useAnchorRef<HTMLButtonElement>(anchor);
+  return (
+    <button
+      ref={ref}
+      className={`form-review form-review-action ${active ? "active" : ""}`}
+      disabled={!active}
+      onClick={() => void onPrepare()}
+    >
+      <div>
+        <ShieldCheck size={17} />
+        <span>
+          <b>{title}</b>
+          <small>{description}</small>
+        </span>
+      </div>
+      <ChevronRight size={16} />
+    </button>
+  );
+}
+
+function ExpenseForm({
+  snapshot,
+  run,
+}: {
+  snapshot: JourneySnapshot;
+  run: (name: string, command: any) => Promise<any>;
+}) {
+  const currentStep = snapshot.steps.find((step) => step.status === "current");
+  const current = currentStep?.capabilityId;
+  const actionable =
+    ["active", "awaiting_user"].includes(snapshot.status) &&
+    (currentStep?.assignedActor === "agent" || snapshot.lastGuidance?.stepId === currentStep?.id);
   return (
     <div className="expense-form">
       <div className="form-section-title">
@@ -1262,19 +1603,32 @@ function ExpenseForm({ snapshot }: { snapshot: JourneySnapshot }) {
         </div>
       </div>
       <div className="form-grid">
-        <FieldShell
+        <TextPortalField
           anchor="expense.date"
           label="Expense date"
-          value={snapshot.expense.date ? DEMO_RECEIPT.displayDate : ""}
-          hint="Required"
-          active={current === "expense.date"}
+          value={snapshot.expense.date}
+          placeholder="YYYY-MM-DD"
+          hint={`Required · receipt says ${DEMO_RECEIPT.displayDate}`}
+          active={actionable && current === "expense.date"}
+          onCommit={(value) =>
+            run("human_expense.date", { type: "UpdateExpenseDraft", field: "date", value })
+          }
         />
-        <FieldShell
+        <TextPortalField
           anchor="expense.amount"
           label="Amount"
-          value={snapshot.expense.amount ? `$${snapshot.expense.amount.toFixed(2)} USD` : ""}
-          hint="Required"
-          active={current === "expense.amount"}
+          value={snapshot.expense.amount?.toString() ?? ""}
+          type="number"
+          placeholder="0.00"
+          hint={`Required · receipt says $${DEMO_RECEIPT.amount.toFixed(2)}`}
+          active={actionable && current === "expense.amount"}
+          parse={(value) => {
+            const amount = Number(value);
+            return Number.isFinite(amount) && amount > 0 ? amount : null;
+          }}
+          onCommit={(value) =>
+            run("human_expense.amount", { type: "UpdateExpenseDraft", field: "amount", value })
+          }
         />
       </div>
       <div className="form-divider" />
@@ -1286,49 +1640,84 @@ function ExpenseForm({ snapshot }: { snapshot: JourneySnapshot }) {
         </div>
       </div>
       <div className="form-grid">
-        <FieldShell
+        <SelectPortalField
           anchor="expense.project"
           label="Project"
           value={snapshot.expense.project}
           hint="Required · judgment"
-          active={current === "expense.project"}
+          active={actionable && current === "expense.project"}
+          options={[...DEMO_PROJECTS]}
+          onCommit={(value) =>
+            run("human_expense.project", {
+              type: "UpdateExpenseDraft",
+              field: "project",
+              value,
+            })
+          }
         />
-        <FieldShell
+        <SelectPortalField
           anchor="expense.category"
           label="Category"
           value={snapshot.expense.category}
           hint="Required"
-          active={current === "expense.category"}
+          active={actionable && current === "expense.category"}
+          options={[...DEMO_CATEGORIES]}
+          onCommit={(value) =>
+            run("human_expense.category", {
+              type: "UpdateExpenseDraft",
+              field: "category",
+              value,
+            })
+          }
         />
         {snapshot.portalVersion === "expense.v2" && (
           <div className="full-field">
-            <FieldShell
+            <TextPortalField
               anchor="expense.businessPurpose"
               label="Business purpose"
               value={snapshot.expense.businessPurpose}
               hint="New in Portal v2 · required"
-              active={current === "expense.businessPurpose"}
+              active={actionable && current === "expense.businessPurpose"}
+              placeholder="Explain the business purpose"
+              onCommit={(value) =>
+                run("human_expense.businessPurpose", {
+                  type: "UpdateExpenseDraft",
+                  field: "businessPurpose",
+                  value,
+                })
+              }
             />
           </div>
         )}
       </div>
-      <div ref={useAnchorRef<HTMLDivElement>("expense.review")} className="form-review">
-        <div>
-          <ShieldCheck size={17} />
-          <span>
-            <b>Submission stays human-controlled</b>
-            <small>The agent may prepare this draft but cannot finalize it.</small>
-          </span>
-        </div>
-        <ChevronRight size={16} />
-      </div>
+      <PrepareControl
+        anchor="expense.review"
+        active={actionable && current === "expense.prepare"}
+        title={
+          current === "expense.prepare"
+            ? "Prepare for my review"
+            : "Submission stays human-controlled"
+        }
+        description="Validate the draft; final submission still requires you."
+        onPrepare={() => run("human_expense.prepare", { type: "PrepareExpenseSubmission" })}
+      />
     </div>
   );
 }
 
-function MileageForm({ snapshot }: { snapshot: JourneySnapshot }) {
-  const current = snapshot.steps.find((step) => step.status === "current")?.capabilityId;
+function MileageForm({
+  snapshot,
+  run,
+}: {
+  snapshot: JourneySnapshot;
+  run: (name: string, command: any) => Promise<any>;
+}) {
+  const currentStep = snapshot.steps.find((step) => step.status === "current");
+  const current = currentStep?.capabilityId;
   const mileage = snapshot.mileage;
+  const actionable =
+    ["active", "awaiting_user"].includes(snapshot.status) &&
+    (currentStep?.assignedActor === "agent" || snapshot.lastGuidance?.stepId === currentStep?.id);
   return (
     <div className="expense-form mileage-form">
       <div className="form-section-title">
@@ -1339,35 +1728,71 @@ function MileageForm({ snapshot }: { snapshot: JourneySnapshot }) {
         </div>
       </div>
       <div className="form-grid">
-        <FieldShell
+        <TextPortalField
           anchor="mileage.origin"
           label="Starting point"
           value={mileage.origin}
-          hint="Required"
-          active={current === "mileage.origin"}
+          hint={`Required · use ${DEMO_MILEAGE.origin}`}
+          active={actionable && current === "mileage.origin"}
+          onCommit={(value) =>
+            run("human_mileage.origin", {
+              type: "UpdateMileageDraft",
+              field: "origin",
+              value,
+            })
+          }
         />
-        <FieldShell
+        <TextPortalField
           anchor="mileage.destination"
           label="Destination"
           value={mileage.destination}
-          hint="Required"
-          active={current === "mileage.destination"}
+          hint={`Required · use ${DEMO_MILEAGE.destination}`}
+          active={actionable && current === "mileage.destination"}
+          onCommit={(value) =>
+            run("human_mileage.destination", {
+              type: "UpdateMileageDraft",
+              field: "destination",
+              value,
+            })
+          }
         />
-        <FieldShell
+        <TextPortalField
           anchor={
             snapshot.portalVersion === "mileage.v2" ? "mileage.routeDistance" : "mileage.distance"
           }
           label="Distance"
-          value={mileage.distanceMiles ? `${mileage.distanceMiles} miles` : ""}
-          hint="0.1–1,000 miles"
-          active={current === "mileage.distance"}
+          value={mileage.distanceMiles?.toString() ?? ""}
+          type="number"
+          hint={`0.1–1,000 miles · use ${DEMO_MILEAGE.distanceMiles}`}
+          active={actionable && current === "mileage.distance"}
+          parse={(value) => {
+            const distance = Number(value);
+            return Number.isFinite(distance) && distance >= 0.1 && distance <= 1000
+              ? distance
+              : null;
+          }}
+          onCommit={(value) =>
+            run("human_mileage.distance", {
+              type: "UpdateMileageDraft",
+              field: "distanceMiles",
+              value,
+            })
+          }
         />
-        <FieldShell
+        <TextPortalField
           anchor="mileage.date"
           label="Trip date"
-          value={mileage.tripDate ? DEMO_MILEAGE.displayDate : ""}
-          hint="Required"
-          active={current === "mileage.date"}
+          value={mileage.tripDate}
+          placeholder="YYYY-MM-DD"
+          hint={`Required · use ${DEMO_MILEAGE.displayDate}`}
+          active={actionable && current === "mileage.date"}
+          onCommit={(value) =>
+            run("human_mileage.date", {
+              type: "UpdateMileageDraft",
+              field: "tripDate",
+              value,
+            })
+          }
         />
       </div>
       <div className="form-divider" />
@@ -1380,36 +1805,52 @@ function MileageForm({ snapshot }: { snapshot: JourneySnapshot }) {
       </div>
       <div className="form-grid">
         <div className="full-field">
-          <FieldShell
+          <TextPortalField
             anchor="mileage.purpose"
             label="Business purpose"
             value={mileage.purpose}
-            hint="Required"
-            active={current === "mileage.purpose"}
+            hint={`Required · ${DEMO_MILEAGE.purpose}`}
+            active={actionable && current === "mileage.purpose"}
+            onCommit={(value) =>
+              run("human_mileage.purpose", {
+                type: "UpdateMileageDraft",
+                field: "purpose",
+                value,
+              })
+            }
           />
         </div>
         {snapshot.portalVersion === "mileage.v2" && (
           <div className="full-field">
-            <FieldShell
+            <SelectPortalField
               anchor="mileage.vehicleType"
               label="Vehicle type"
               value={mileage.vehicleType}
               hint="New in Portal v2 · required"
-              active={current === "mileage.vehicleType"}
+              active={actionable && current === "mileage.vehicleType"}
+              options={[DEMO_MILEAGE.vehicleType, "Electric vehicle", "Motorcycle"]}
+              onCommit={(value) =>
+                run("human_mileage.vehicleType", {
+                  type: "UpdateMileageDraft",
+                  field: "vehicleType",
+                  value,
+                })
+              }
             />
           </div>
         )}
       </div>
-      <div ref={useAnchorRef<HTMLDivElement>("mileage.review")} className="form-review">
-        <div>
-          <ShieldCheck size={17} />
-          <span>
-            <b>Reimbursement stays human-controlled</b>
-            <small>The agent may calculate the draft but cannot submit it.</small>
-          </span>
-        </div>
-        <ChevronRight size={16} />
-      </div>
+      <PrepareControl
+        anchor="mileage.review"
+        active={actionable && current === "mileage.prepare"}
+        title={
+          current === "mileage.prepare"
+            ? "Prepare mileage for review"
+            : "Reimbursement stays human-controlled"
+        }
+        description="Calculate the draft; final submission still requires you."
+        onPrepare={() => run("human_mileage.prepare", { type: "PrepareMileageSubmission" })}
+      />
     </div>
   );
 }

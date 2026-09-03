@@ -416,6 +416,12 @@ The text and structured result agree. Normal output stays under 1.5 KB. Raw upst
 - ~~The action trail renders accepted server events, not local click logs.~~ ✅
 - ~~Guidance position is client presentation state; journey progress is server state.~~ ✅
 - ~~`ResizeObserver`, scroll listeners, and semantic React refs keep the visual anchor current.~~ ✅
+- ~~A focused, visible-tab orchestrator submits `ShowGuidance` exactly once when control reaches a person and no matching guidance exists.~~ ✅
+- ~~Human-owned portal controls remain disabled until that guidance revision commits, preventing a guidance/action stale-revision race.~~ ✅
+- ~~Real inputs commit on Enter/blur, selects commit on change, and preparation uses the portal review control; accepted server state alone advances the UI.~~ ✅
+- ~~Automatic speech is keyed by session, step, and resolved anchor so rerenders cannot repeat it.~~ ✅
+- ~~Journey help parses only bounded semantic intents locally; raw transcripts are not sent to persistence. Point-on-demand is transient presentation state and cannot advance progress.~~ ✅
+- ~~Background tabs neither initiate automatic guidance nor speak. Focus and visibility events safely wake an unguided human step.~~ ✅
 
 ## 11. Observability
 

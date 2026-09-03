@@ -1,7 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-const dateField = (page: Page) =>
-  page.locator(".expense-field").filter({ hasText: "Expense date" });
+const dateField = (page: Page) => page.getByLabel("Expense date");
 
 async function expectOverlayAttached(page: Page, target: Locator) {
   await expect(page.locator(".guidance-spotlight")).toBeVisible();
@@ -38,8 +37,8 @@ async function expectOverlayAttached(page: Page, target: Locator) {
 test.beforeEach(async ({ page }) => {
   await page.goto("/demo");
   await page.getByRole("radio", { name: /Show me/ }).click();
-  await page.getByRole("button", { name: "Start shared journey" }).click();
-  await page.getByRole("button", { name: "Highlight this step" }).click();
+  await page.getByRole("button", { name: "Start guiding me" }).click();
+  await expect(page.locator(".guidance-coach")).toBeVisible();
 });
 
 test("guidance stays attached after scroll and resize while its coach remains on-screen", async ({
@@ -80,16 +79,61 @@ test("coach text communicates ownership and outcome without blocking the human a
       .evaluate((node) => getComputedStyle(node).pointerEvents),
   ).toBe("none");
 
-  await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
+  await page.getByLabel("Expense date").fill("2026-08-31");
+  await page.getByLabel("Expense date").press("Enter");
   await expect(page.getByText("STEP 02 / 06")).toBeVisible();
-  await expect(page.locator(".guidance-coach")).toHaveCount(0);
+  await expect(page.locator(".guidance-coach")).toContainText("Add the amount");
+  await expectOverlayAttached(page, page.getByLabel("Amount"));
+});
+
+test("automatic guidance records exactly once for each verified human step", async ({ page }) => {
+  await expect(page.locator(".guidance-coach")).toContainText("Add the receipt date");
+  await page.getByRole("button", { name: "Diagnostics" }).click();
+  await page.getByRole("button", { name: "Close diagnostics" }).click();
+  const firstCount = await page.evaluate(async () => {
+    const sessionId = sessionStorage.getItem("pave.session.v1")!;
+    const payload = (await fetch(`/api/sessions/${sessionId}/events`).then((response) =>
+      response.json(),
+    )) as { events: Array<{ type: string; safePayload: { stepId?: string } }> };
+    return payload.events.filter(
+      (event) => event.type === "GuidanceShown" && event.safePayload.stepId === "step-1",
+    ).length;
+  });
+  expect(firstCount).toBe(1);
+
+  await page.getByLabel("Expense date").fill("2026-08-31");
+  await page.getByLabel("Expense date").press("Enter");
+  await expect(page.locator(".guidance-coach")).toContainText("Add the amount");
+  const secondCount = await page.evaluate(async () => {
+    const sessionId = sessionStorage.getItem("pave.session.v1")!;
+    const payload = (await fetch(`/api/sessions/${sessionId}/events`).then((response) =>
+      response.json(),
+    )) as { events: Array<{ type: string; safePayload: { stepId?: string } }> };
+    return payload.events.filter(
+      (event) => event.type === "GuidanceShown" && event.safePayload.stepId === "step-2",
+    ).length;
+  });
+  expect(secondCount).toBe(1);
+});
+
+test("invalid portal input keeps the current waypoint and explains the correction", async ({
+  page,
+}) => {
+  await page.getByLabel("Expense date").fill("2026-08-31");
+  await page.getByLabel("Expense date").press("Enter");
+  await expect(page.getByLabel("Amount")).toBeEnabled();
+  await page.getByLabel("Amount").fill("0");
+  await page.getByLabel("Amount").press("Enter");
+  await expect(page.getByText("Enter a valid value before continuing.")).toBeVisible();
+  await expect(page.getByText("STEP 02 / 06")).toBeVisible();
+  await expect(page.locator(".guidance-coach")).toContainText("Add the amount");
 });
 
 test("the complete Show Me journey can be operated by keyboard with announced state", async ({
   page,
 }) => {
   await expect(page.locator(".toast")).toHaveCount(0, { timeout: 6_000 });
-  // Complete the already-highlighted date step and every subsequent action using keyboard activation.
+  // Complete the automatically guided journey through the real controls using only the keyboard.
   const activate = async (name: string) => {
     const button = page.getByRole("button", { name });
     await button.focus();
@@ -97,18 +141,27 @@ test("the complete Show Me journey can be operated by keyboard with announced st
     await button.press("Space");
   };
 
-  await activate("Use Aug 31, 2026");
-  await expect(page.getByRole("status").filter({ hasText: /Step 2 of 6/ })).toContainText(
-    "Control is with you",
-  );
-  await activate("Use $86.00");
-  await activate("Choose Project Atlas");
-  await activate("Choose Client meal");
+  const date = page.getByLabel("Expense date");
+  await date.focus();
+  await date.pressSequentially("2026-08-31");
+  await date.press("Enter");
+  await expect(page.locator(".sr-only[role='status']")).toContainText("Control is with you");
+  const amount = page.getByLabel("Amount");
+  await amount.focus();
+  await amount.pressSequentially("86");
+  await amount.press("Enter");
+  const project = page.getByLabel("Project");
+  await expect(project).toBeEnabled();
+  await project.focus();
+  await project.press("ArrowDown");
+  await expect(page.getByLabel("Category")).toBeEnabled();
+  const category = page.getByLabel("Category");
+  await category.focus();
+  await category.press("ArrowDown");
+  await expect(page.getByRole("button", { name: "Prepare for my review" })).toBeEnabled();
   await activate("Prepare for my review");
   await expect(page.getByText("HUMAN-ONLY BOUNDARY")).toBeVisible();
   await activate("Confirm and submit expense");
-  await expect(page.getByRole("status").filter({ hasText: /Journey complete/ })).toContainText(
-    "history verified",
-  );
+  await expect(page.locator(".sr-only[role='status']")).toContainText("history verified");
   await expect(page.getByText("VERIFIED COMPLETION")).toBeVisible();
 });

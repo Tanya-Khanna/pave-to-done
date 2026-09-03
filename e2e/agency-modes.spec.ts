@@ -1,17 +1,13 @@
 import { expect, test } from "@playwright/test";
+import { fillExpense, setExpenseDate, startExpense } from "./journey-actions";
 
 test("manual fallback completes the same human-controlled journey", async ({ page }) => {
   await page.goto("/demo");
-  await expect(page.getByRole("button", { name: "Start shared journey" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start guiding me" })).toBeVisible();
   await page.getByRole("radio", { name: /Show me/ }).click();
-  await page.getByRole("button", { name: "Start shared journey" }).click();
-
-  await page.getByRole("button", { name: "Highlight this step" }).click();
+  await startExpense(page);
   await expect(page.locator(".guidance-spotlight")).toBeVisible();
-  await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
-  await page.getByRole("button", { name: "Use $86.00" }).click();
-  await page.getByRole("button", { name: "Choose Project Atlas" }).click();
-  await page.getByRole("button", { name: "Choose Client meal" }).click();
+  await fillExpense(page);
   await page.getByRole("button", { name: "Prepare for my review" }).click();
 
   await expect(page.getByText("HUMAN-ONLY BOUNDARY")).toBeVisible();
@@ -22,11 +18,9 @@ test("manual fallback completes the same human-controlled journey", async ({ pag
 
 test("changing modes preserves completed work", async ({ page }) => {
   await page.goto("/demo");
-  await page.getByRole("button", { name: "Start shared journey" }).click();
-  await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
-  await expect(
-    page.locator(".expense-field").filter({ hasText: "Expense date" }).getByText("Aug 31, 2026"),
-  ).toBeVisible();
+  await startExpense(page);
+  await setExpenseDate(page);
+  await expect(page.getByLabel("Expense date")).toHaveValue("2026-08-31");
   const delegatedMode = page.getByRole("radio", { name: /Do it for me/ });
   await delegatedMode.click();
   await expect(delegatedMode).toBeChecked();
@@ -35,7 +29,7 @@ test("changing modes preserves completed work", async ({ page }) => {
 
 test("the human can pause and resume without losing verified work", async ({ page }) => {
   await page.goto("/demo");
-  await page.getByRole("button", { name: "Start shared journey" }).click();
+  await startExpense(page);
   await page.getByRole("button", { name: "Pause journey" }).click();
 
   await expect(page.getByText("JOURNEY PAUSED", { exact: true })).toBeVisible();

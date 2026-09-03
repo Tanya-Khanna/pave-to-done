@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { fillExpense, startExpense } from "./journey-actions";
 
 async function agentCommand(page: Page, command: Record<string, unknown>) {
   return page.evaluate(async (nextCommand) => {
@@ -23,16 +24,13 @@ async function agentCommand(page: Page, command: Record<string, unknown>) {
 test("Portal v2 preserves progress and requires repair approval", async ({ page }) => {
   await page.goto("/demo");
   await page.getByRole("radio", { name: /Do it for me/ }).click();
-  await page.getByRole("button", { name: "Start shared journey" }).click();
-  await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
-  await page.getByRole("button", { name: "Use $86.00" }).click();
-  await page.getByRole("button", { name: "Choose Project Atlas" }).click();
-  await page.getByRole("button", { name: "Choose Client meal" }).click();
+  await startExpense(page);
+  await fillExpense(page);
   await expect(page.getByRole("button", { name: "Prepare for my review" })).toBeVisible();
 
   await page.getByRole("button", { name: "Simulate Portal v2" }).click();
   await expect(page.getByText("PORTAL CHANGE DETECTED", { exact: true })).toBeVisible();
-  await expect(page.getByText("Project Atlas", { exact: true })).toBeVisible();
+  await expect(page.getByLabel("Project")).toHaveValue("Project Atlas");
   const proposed = await agentCommand(page, {
     type: "ProposeRepair",
     businessPurpose: "Client dinner after Project Atlas workshop",
@@ -42,18 +40,18 @@ test("Portal v2 preserves progress and requires repair approval", async ({ page 
   await expect(page.getByRole("button", { name: "Approve material repair" })).toBeVisible();
   await page.getByRole("button", { name: "Approve material repair" }).click();
   await expect(page.getByRole("heading", { name: "Add business purpose" })).toBeVisible();
-  await page.getByRole("button", { name: "Use client workshop purpose" }).click();
-  await expect(page.getByText("Client dinner after Project Atlas workshop")).toBeVisible();
+  await page.getByLabel("Business purpose").fill("Client dinner after Project Atlas workshop");
+  await page.getByLabel("Business purpose").press("Enter");
+  await expect(page.getByLabel("Business purpose")).toHaveValue(
+    "Client dinner after Project Atlas workshop",
+  );
 });
 
 test("rejecting a material repair preserves the draft and stops progression", async ({ page }) => {
   await page.goto("/demo");
   await page.getByRole("radio", { name: /Show me/ }).click();
-  await page.getByRole("button", { name: "Start shared journey" }).click();
-  await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
-  await page.getByRole("button", { name: "Use $86.00" }).click();
-  await page.getByRole("button", { name: "Choose Project Atlas" }).click();
-  await page.getByRole("button", { name: "Choose Client meal" }).click();
+  await startExpense(page);
+  await fillExpense(page);
   await expect(page.getByRole("button", { name: "Prepare for my review" })).toBeVisible();
   await page.getByRole("button", { name: "Simulate Portal v2" }).click();
   await expect(page.getByText("PORTAL CHANGE DETECTED", { exact: true })).toBeVisible();
@@ -67,7 +65,7 @@ test("rejecting a material repair preserves the draft and stops progression", as
   await page.getByRole("button", { name: "Stop this journey" }).click();
 
   await expect(page.getByText("JOURNEY STOPPED", { exact: true })).toBeVisible();
-  await expect(page.getByText("Project Atlas", { exact: true })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Prepare for my review" })).toHaveCount(0);
+  await expect(page.getByLabel("Project")).toHaveValue("Project Atlas");
+  await expect(page.getByRole("button", { name: "Prepare for my review" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Reset journey" })).toBeVisible();
 });

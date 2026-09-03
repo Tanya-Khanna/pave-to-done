@@ -230,8 +230,12 @@ Start testing with this prompt:
 4. ~~Render semantic target outline, attention waypoint, and anchored coach card. Omit the optional ghost gesture because simulated pointer motion could falsely imply execution.~~ ✅
 5. ~~Keep instructed control clickable and focusable.~~ ✅
 6. ~~Add keyboard focus, screen-reader status, and reduced-motion behavior.~~ ✅
+7. ~~Automatically issue guidance once whenever a verified transition gives control to the person.~~ ✅
+8. ~~Replace dock action shortcuts with actual portal inputs, selects, and preparation controls.~~ ✅
+9. ~~Gate human controls on the committed guidance revision so rapid input cannot race automatic guidance.~~ ✅
+10. ~~Add a user-activated offscreen reveal and a separate transient amber point-on-demand locator.~~ ✅
 
-**Gate 4:** guidance stays attached after scroll/resize, does not block clicks, and communicates current action without color alone.
+**Gate 4:** a person states the task once, acts only on real highlighted controls, and receives the next attached visual/spoken instruction automatically after each verified action. Guidance remains accurate after scroll/resize, does not block interaction, and communicates current action without color alone.
 
 ### Phase 5 — self-healing
 
@@ -273,9 +277,12 @@ Start testing with this prompt:
 1. ~~Implement speech output for current instruction, warning, and approval summary.~~ ✅
 2. ~~Add microphone input only after capability detection; always show transcript and text field.~~ ✅
 3. ~~Implement design tokens, typography, spacing, responsive shell, and states.~~ ✅
-4. ~~Build landing hero, live mode preview, teach/on-demand convergence, healing morph, WebMCP proof, and CTA.~~ ✅
-5. ~~Add the three signature animations: route drawing, control baton handoff, and semantic-anchor movement.~~ ✅
-6. ~~Generate social card and capture consistent screenshots from the real app.~~ ✅
+4. ~~Start a recognized task without a second click and automatically speak each new human-owned step once.~~ ✅
+5. ~~Add typed and spoken mid-session help for repeat, why, progress, locating controls, pause/resume, and agency changes.~~ ✅
+6. ~~Pause authoritative work while voice help listens, resume at the same step after answering, and never persist raw transcripts.~~ ✅
+7. ~~Build landing hero, live mode preview, teach/on-demand convergence, healing morph, WebMCP proof, and CTA.~~ ✅
+8. ~~Add the three signature animations: route drawing, control baton handoff, and semantic-anchor movement.~~ ✅
+9. ~~Generate social card and capture consistent screenshots from the real app.~~ ✅
 
 **Gate 7:** landing message is understood in five seconds, demo CTA is above the fold, animations remain smooth and optional, and no visual effect hides a broken or ambiguous state.
 

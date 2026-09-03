@@ -23,8 +23,8 @@ test("the main experience has no console errors or third-party requests", async 
   await page.goto("/");
   await expect(page.getByRole("heading", { name: "From “show me” to safely done." })).toBeVisible();
   await page.getByRole("button", { name: "Open the live journey" }).click();
-  await expect(page.getByRole("button", { name: "Start shared journey" })).toBeVisible();
-  await page.getByRole("button", { name: "Start shared journey" }).click();
+  await expect(page.getByRole("button", { name: "Start guiding me" })).toBeVisible();
+  await page.getByRole("button", { name: "Start guiding me" }).click();
   await expect(page.getByText("STEP 01 / 06")).toBeVisible();
 
   const productionErrors = consoleErrors.filter(

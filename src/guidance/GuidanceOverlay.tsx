@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ActorKind } from "../domain/types";
 import { useAnchorRegistry } from "./AnchorRegistry";
 
@@ -68,6 +68,8 @@ export function GuidanceOverlay({ anchorKey, active, title, reason, actor }: Gui
   const registry = useAnchorRegistry();
   const [box, setBox] = useState<TargetBox | null>(null);
   const [coach, setCoach] = useState<CoachPosition | null>(null);
+  const [offscreen, setOffscreen] = useState(false);
+  const targetRef = useRef<HTMLElement | null>(null);
   useEffect(() => {
     if (!active || !anchorKey) {
       setBox(null);
@@ -80,6 +82,7 @@ export function GuidanceOverlay({ anchorKey, active, title, reason, actor }: Gui
       setCoach(null);
       return;
     }
+    targetRef.current = element;
     const update = () => {
       const bounds = element.getBoundingClientRect();
       const next = {
@@ -90,6 +93,12 @@ export function GuidanceOverlay({ anchorKey, active, title, reason, actor }: Gui
       };
       setBox(next);
       setCoach(positionCoach(next));
+      setOffscreen(
+        bounds.bottom < 0 ||
+          bounds.top > window.innerHeight ||
+          bounds.right < 0 ||
+          bounds.left > window.innerWidth,
+      );
     };
     update();
     const observer = new ResizeObserver(update);
@@ -106,6 +115,20 @@ export function GuidanceOverlay({ anchorKey, active, title, reason, actor }: Gui
   const owner = actor === "agent" ? "Agent acts" : "You act";
   return (
     <>
+      {offscreen && (
+        <button
+          className="guidance-reveal"
+          onClick={() =>
+            targetRef.current?.scrollIntoView({
+              behavior: "smooth",
+              block: "center",
+              inline: "center",
+            })
+          }
+        >
+          Take me to {title ?? "the next step"}
+        </button>
+      )}
       <div
         className="guidance-spotlight"
         aria-hidden="true"
@@ -143,5 +166,62 @@ export function GuidanceOverlay({ anchorKey, active, title, reason, actor }: Gui
         </dl>
       </aside>
     </>
+  );
+}
+
+interface LocatorOverlayProps {
+  anchorKey?: string;
+  active: boolean;
+  label?: string;
+  onDismiss(): void;
+}
+
+export function LocatorOverlay({ anchorKey, active, label, onDismiss }: LocatorOverlayProps) {
+  const registry = useAnchorRegistry();
+  const [box, setBox] = useState<TargetBox | null>(null);
+
+  useEffect(() => {
+    if (!active || !anchorKey) {
+      setBox(null);
+      return;
+    }
+    const element = registry.get(anchorKey);
+    if (!element) {
+      setBox(null);
+      return;
+    }
+    const update = () => {
+      const bounds = element.getBoundingClientRect();
+      setBox({ left: bounds.left, top: bounds.top, width: bounds.width, height: bounds.height });
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    const timer = window.setTimeout(onDismiss, 7000);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+      window.clearTimeout(timer);
+    };
+  }, [active, anchorKey, onDismiss, registry]);
+
+  if (!box) return null;
+  return (
+    <div
+      className="locator-pulse"
+      role="status"
+      aria-label={label ? `Located ${label}` : "Requested control located"}
+      style={{
+        left: box.left - 5,
+        top: box.top - 5,
+        width: box.width + 10,
+        height: box.height + 10,
+      }}
+    >
+      <span>{label ?? "HERE"}</span>
+    </div>
   );
 }

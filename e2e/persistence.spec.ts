@@ -1,13 +1,11 @@
 import { expect, test } from "@playwright/test";
+import { fillExpense, setExpenseDate, startExpense } from "./journey-actions";
 
 async function reachExpenseConfirmation(page: import("@playwright/test").Page) {
   await page.goto("/demo");
   await page.getByRole("radio", { name: /Show me/ }).click();
-  await page.getByRole("button", { name: "Start shared journey" }).click();
-  await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
-  await page.getByRole("button", { name: "Use $86.00" }).click();
-  await page.getByRole("button", { name: "Choose Project Atlas" }).click();
-  await page.getByRole("button", { name: "Choose Client meal" }).click();
+  await startExpense(page);
+  await fillExpense(page);
   await page.getByRole("button", { name: "Prepare for my review" }).click();
   await expect(page.getByRole("button", { name: "Confirm and submit expense" })).toBeVisible();
 }
@@ -38,7 +36,7 @@ test("two tabs sharing a guest session converge after either tab acts", async ({
   context,
 }) => {
   await page.goto("/demo");
-  await expect(page.getByRole("button", { name: "Start shared journey" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start guiding me" })).toBeVisible();
   const sessionId = await page.evaluate(() => sessionStorage.getItem("pave.session.v1"));
   expect(sessionId).toBeTruthy();
 
@@ -47,24 +45,24 @@ test("two tabs sharing a guest session converge after either tab acts", async ({
     sessionStorage.setItem("pave.session.v1", sharedSessionId);
   }, sessionId!);
   await teammate.goto("/demo");
-  await expect(teammate.getByRole("button", { name: "Start shared journey" })).toBeVisible();
+  await expect(teammate.getByRole("button", { name: "Start guiding me" })).toBeVisible();
 
-  await page.getByRole("button", { name: "Start shared journey" }).click();
+  await page.getByRole("button", { name: "Start guiding me" }).click();
   await expect(teammate.getByText("STEP 01 / 06")).toBeVisible();
-  await expect(teammate.getByRole("button", { name: "Use Aug 31, 2026" })).toBeVisible();
+  await expect(teammate.getByLabel("Expense date")).toBeEnabled();
 
-  await teammate.getByRole("button", { name: "Use Aug 31, 2026" }).click();
+  await setExpenseDate(teammate);
   await expect(page.getByText("STEP 02 / 06")).toBeVisible();
-  await expect(page.getByRole("button", { name: "Use $86.00" })).toBeVisible();
+  await expect(page.getByLabel("Amount")).toBeEnabled();
 });
 
 test("reset starts a fresh document so WebMCP registration limits also reset", async ({ page }) => {
   await page.goto("/demo");
-  await page.getByRole("button", { name: "Start shared journey" }).click();
-  await page.getByRole("button", { name: "Use Aug 31, 2026" }).click();
+  await startExpense(page);
+  await setExpenseDate(page);
   await page.getByRole("button", { name: "Reset", exact: true }).click();
 
-  await expect(page.getByRole("button", { name: "Start shared journey" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Start guiding me" })).toBeVisible();
   expect(
     await page.evaluate(
       () => (performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming).type,
@@ -75,7 +73,7 @@ test("reset starts a fresh document so WebMCP registration limits also reset", a
 test("a double-clicked start accepts one journey and records one start event", async ({ page }) => {
   await page.goto("/demo");
   await page
-    .getByRole("button", { name: "Start shared journey" })
+    .getByRole("button", { name: "Start guiding me" })
     .evaluate((button: HTMLButtonElement) => {
       button.click();
       button.click();
